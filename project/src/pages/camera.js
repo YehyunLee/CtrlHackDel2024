@@ -10,15 +10,38 @@ export default function VideoNoteApp() {
   const [isMuted, setIsMuted] = useState(false)
   const [note, setNote] = useState("")
   const [isNotesExpanded, setIsNotesExpanded] = useState(false)
+  const [speechRecognitionActive, setSpeechRecognitionActive] = useState(false)
+  const [recognition, setRecognition] = useState(null)
 
   useEffect(() => {
-    if (isRecording && !isPaused) {
-      const interval = setInterval(() => {
-        setNote(prevNote => prevNote + "Lorem ipsum dolor sit amet. ")
-      }, 2000)
-      return () => clearInterval(interval)
+    // Check if the window object is available (i.e., we're on the client side)
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+      if (SpeechRecognition) {
+        const newRecognition = new SpeechRecognition()
+        newRecognition.continuous = true
+        newRecognition.interimResults = true
+
+        // Handle recognition results
+        newRecognition.onresult = (event) => {
+          let transcript = ''
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            transcript += event.results[i][0].transcript
+          }
+          setNote((prevNote) => prevNote + transcript)
+          console.log('Transcript received:', transcript) // DEBUG: Log received speech
+        }
+
+        newRecognition.onerror = (event) => {
+          console.error("SpeechRecognition error:", event.error) // DEBUG: Log any errors
+        }
+
+        setRecognition(newRecognition)
+      } else {
+        console.error("SpeechRecognition API is not supported in this browser.")
+      }
     }
-  }, [isRecording, isPaused])
+  }, [])
 
   const startCamera = async () => {
     try {
@@ -27,13 +50,32 @@ export default function VideoNoteApp() {
         videoRef.current.srcObject = stream
       }
     } catch (err) {
-      console.error("Error accessing the camera:", err)
+      console.error("Error accessing the camera and/or microphone:", err) // DEBUG: Log errors
+    }
+  }
+
+  const startSpeechRecognition = () => {
+    if (recognition && !speechRecognitionActive) {
+      recognition.start()
+      console.log("Speech recognition started.") // DEBUG: Log start
+      setSpeechRecognitionActive(true)
+    }
+  }
+
+  const stopSpeechRecognition = () => {
+    if (recognition && speechRecognitionActive) {
+      recognition.stop()
+      console.log("Speech recognition stopped.") // DEBUG: Log stop
+      setSpeechRecognitionActive(false)
     }
   }
 
   const toggleRecording = () => {
     if (!isRecording) {
       startCamera()
+      startSpeechRecognition()
+    } else {
+      stopSpeechRecognition()
     }
     setIsRecording(!isRecording)
     setIsPaused(false)
@@ -41,6 +83,13 @@ export default function VideoNoteApp() {
 
   const togglePause = () => {
     setIsPaused(!isPaused)
+    if (isPaused) {
+      recognition?.start()
+      console.log("Speech recognition resumed.") // DEBUG: Log resume
+    } else {
+      recognition?.stop()
+      console.log("Speech recognition paused.") // DEBUG: Log pause
+    }
   }
 
   const toggleMute = () => {
@@ -101,9 +150,7 @@ export default function VideoNoteApp() {
           </div>
         </div>
         <div 
-          className={`bg-gray-800 transition-all duration-300 ease-in-out ${
-            isNotesExpanded ? 'h-1/2' : 'h-20'
-          }`}
+          className={`bg-gray-800 transition-all duration-300 ease-in-out ${isNotesExpanded ? 'h-1/2' : 'h-20'}`}
         >
           <div 
             className="flex items-center justify-between p-4 cursor-pointer"
