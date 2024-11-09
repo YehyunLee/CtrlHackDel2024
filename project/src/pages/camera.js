@@ -9,16 +9,46 @@ export default function VideoNoteApp() {
   const [isPaused, setIsPaused] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
   const [note, setNote] = useState("")
+  const [interimTranscript, setInterimTranscript] = useState("") // To handle interim results separately
   const [isNotesExpanded, setIsNotesExpanded] = useState(false)
+  const [speechRecognitionActive, setSpeechRecognitionActive] = useState(false)
+  const [recognition, setRecognition] = useState(null)
 
   useEffect(() => {
-    if (isRecording && !isPaused) {
-      const interval = setInterval(() => {
-        setNote(prevNote => prevNote + "Lorem ipsum dolor sit amet. ")
-      }, 2000)
-      return () => clearInterval(interval)
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+      if (SpeechRecognition) {
+        const newRecognition = new SpeechRecognition()
+        newRecognition.continuous = true
+        newRecognition.interimResults = true
+
+        newRecognition.onresult = (event) => {
+          let interim = ""
+          let final = ""
+
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript
+            if (event.results[i].isFinal) {
+              final += transcript + " " // Append final result
+            } else {
+              interim += transcript + " " // Capture interim results
+            }
+          }
+
+          setNote((prevNote) => prevNote + final) // Add final results to the note
+          setInterimTranscript(interim) // Update interim transcript separately
+        }
+
+        newRecognition.onerror = (event) => {
+          console.error("SpeechRecognition error:", event.error)
+        }
+
+        setRecognition(newRecognition)
+      } else {
+        console.error("SpeechRecognition API is not supported in this browser.")
+      }
     }
-  }, [isRecording, isPaused])
+  }, [])
 
   const startCamera = async () => {
     try {
@@ -27,13 +57,32 @@ export default function VideoNoteApp() {
         videoRef.current.srcObject = stream
       }
     } catch (err) {
-      console.error("Error accessing the camera:", err)
+      console.error("Error accessing the camera and/or microphone:", err)
+    }
+  }
+
+  const startSpeechRecognition = () => {
+    if (recognition && !speechRecognitionActive) {
+      recognition.start()
+      console.log("Speech recognition started.")
+      setSpeechRecognitionActive(true)
+    }
+  }
+
+  const stopSpeechRecognition = () => {
+    if (recognition && speechRecognitionActive) {
+      recognition.stop()
+      console.log("Speech recognition stopped.")
+      setSpeechRecognitionActive(false)
     }
   }
 
   const toggleRecording = () => {
     if (!isRecording) {
       startCamera()
+      startSpeechRecognition()
+    } else {
+      stopSpeechRecognition()
     }
     setIsRecording(!isRecording)
     setIsPaused(false)
@@ -41,6 +90,13 @@ export default function VideoNoteApp() {
 
   const togglePause = () => {
     setIsPaused(!isPaused)
+    if (isPaused) {
+      recognition?.start()
+      console.log("Speech recognition resumed.")
+    } else {
+      recognition?.stop()
+      console.log("Speech recognition paused.")
+    }
   }
 
   const toggleMute = () => {
@@ -101,9 +157,7 @@ export default function VideoNoteApp() {
           </div>
         </div>
         <div 
-          className={`bg-gray-800 transition-all duration-300 ease-in-out ${
-            isNotesExpanded ? 'h-1/2' : 'h-20'
-          }`}
+          className={`bg-gray-800 transition-all duration-300 ease-in-out ${isNotesExpanded ? 'h-1/2' : 'h-20'}`}
         >
           <div 
             className="flex items-center justify-between p-4 cursor-pointer"
@@ -116,7 +170,7 @@ export default function VideoNoteApp() {
             }
           </div>
           <div className={`px-4 pb-4 ${isNotesExpanded ? 'h-[calc(100%-4rem)] overflow-y-auto' : 'h-0 overflow-hidden'}`}>
-            <p className="text-sm text-gray-300">{note}</p>
+            <p className="text-sm text-gray-300">{note}{interimTranscript && <span className="text-gray-500"> ({interimTranscript})</span>}</p>
           </div>
         </div>
       </main>
