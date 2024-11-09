@@ -1,15 +1,16 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Camera, Mic, MicOff, Pause, Play, StopCircle, ChevronUp, ChevronDown } from "lucide-react"
+import { Camera, CameraOff, Mic, MicOff, Pause, Play, StopCircle, ChevronUp, ChevronDown } from "lucide-react"
 
 export default function VideoNoteApp() {
   const videoRef = useRef(null)
-  const [isRecording, setIsRecording] = useState(false)
+  const [isCameraOn, setIsCameraOn] = useState(false)
+  const [isNoteTaking, setIsNoteTaking] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
   const [note, setNote] = useState("")
-  const [interimTranscript, setInterimTranscript] = useState("") // To handle interim results separately
+  const [interimTranscript, setInterimTranscript] = useState("")
   const [isNotesExpanded, setIsNotesExpanded] = useState(false)
   const [speechRecognitionActive, setSpeechRecognitionActive] = useState(false)
   const [recognition, setRecognition] = useState(null)
@@ -29,14 +30,14 @@ export default function VideoNoteApp() {
           for (let i = event.resultIndex; i < event.results.length; i++) {
             const transcript = event.results[i][0].transcript
             if (event.results[i].isFinal) {
-              final += transcript + " " // Append final result
+              final += transcript + " "
             } else {
-              interim += transcript + " " // Capture interim results
+              interim += transcript + " "
             }
           }
 
-          setNote((prevNote) => prevNote + final) // Add final results to the note
-          setInterimTranscript(interim) // Update interim transcript separately
+          setNote((prevNote) => prevNote + final)
+          setInterimTranscript(interim)
         }
 
         newRecognition.onerror = (event) => {
@@ -50,14 +51,23 @@ export default function VideoNoteApp() {
     }
   }, [])
 
-  const startCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream
+  const toggleCamera = async () => {
+    if (!isCameraOn) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream
+        }
+        setIsCameraOn(true)
+      } catch (err) {
+        console.error("Error accessing the camera and/or microphone:", err)
       }
-    } catch (err) {
-      console.error("Error accessing the camera and/or microphone:", err)
+    } else {
+      if (videoRef.current && videoRef.current.srcObject) {
+        videoRef.current.srcObject.getTracks().forEach(track => track.stop())
+        videoRef.current.srcObject = null
+      }
+      setIsCameraOn(false)
     }
   }
 
@@ -77,15 +87,14 @@ export default function VideoNoteApp() {
     }
   }
 
-  const toggleRecording = () => {
-    if (!isRecording) {
-      startCamera()
+  const toggleNoteTaking = () => {
+    if (!isNoteTaking) {
       startSpeechRecognition()
     } else {
       stopSpeechRecognition()
+      setIsPaused(false)
     }
-    setIsRecording(!isRecording)
-    setIsPaused(false)
+    setIsNoteTaking(!isNoteTaking)
   }
 
   const togglePause = () => {
@@ -123,16 +132,23 @@ export default function VideoNoteApp() {
           />
           <div className="absolute bottom-4 left-4 right-4 flex justify-center space-x-4">
             <button
-              onClick={toggleRecording}
+              onClick={toggleCamera}
               className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
-              aria-label={isRecording ? "Stop recording" : "Start recording"}
+              aria-label={isCameraOn ? "Turn off camera" : "Turn on camera"}
             >
-              {isRecording ? 
-                <StopCircle className="h-6 w-6 text-red-500" /> : 
-                <Camera className="h-6 w-6 text-white" />
+              {isCameraOn ? 
+                <Camera className="h-6 w-6 text-white" /> : 
+                <CameraOff className="h-6 w-6 text-white" />
               }
             </button>
-            {isRecording && (
+            <button
+              onClick={toggleNoteTaking}
+              className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
+              aria-label={isNoteTaking ? "Stop taking notes" : "Start taking notes"}
+            >
+              <StopCircle className={`h-6 w-6 ${isNoteTaking ? 'text-red-500' : 'text-white'}`} />
+            </button>
+            {isNoteTaking && (
               <button
                 onClick={togglePause}
                 className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
