@@ -9,12 +9,12 @@ export default function VideoNoteApp() {
   const [isPaused, setIsPaused] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
   const [note, setNote] = useState("")
+  const [interimTranscript, setInterimTranscript] = useState("") // To handle interim results separately
   const [isNotesExpanded, setIsNotesExpanded] = useState(false)
   const [speechRecognitionActive, setSpeechRecognitionActive] = useState(false)
   const [recognition, setRecognition] = useState(null)
 
   useEffect(() => {
-    // Check if the window object is available (i.e., we're on the client side)
     if (typeof window !== 'undefined') {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
       if (SpeechRecognition) {
@@ -22,18 +22,25 @@ export default function VideoNoteApp() {
         newRecognition.continuous = true
         newRecognition.interimResults = true
 
-        // Handle recognition results
         newRecognition.onresult = (event) => {
-          let transcript = ''
+          let interim = ""
+          let final = ""
+
           for (let i = event.resultIndex; i < event.results.length; i++) {
-            transcript += event.results[i][0].transcript
+            const transcript = event.results[i][0].transcript
+            if (event.results[i].isFinal) {
+              final += transcript + " " // Append final result
+            } else {
+              interim += transcript + " " // Capture interim results
+            }
           }
-          setNote((prevNote) => prevNote + transcript)
-          console.log('Transcript received:', transcript) // DEBUG: Log received speech
+
+          setNote((prevNote) => prevNote + final) // Add final results to the note
+          setInterimTranscript(interim) // Update interim transcript separately
         }
 
         newRecognition.onerror = (event) => {
-          console.error("SpeechRecognition error:", event.error) // DEBUG: Log any errors
+          console.error("SpeechRecognition error:", event.error)
         }
 
         setRecognition(newRecognition)
@@ -50,14 +57,14 @@ export default function VideoNoteApp() {
         videoRef.current.srcObject = stream
       }
     } catch (err) {
-      console.error("Error accessing the camera and/or microphone:", err) // DEBUG: Log errors
+      console.error("Error accessing the camera and/or microphone:", err)
     }
   }
 
   const startSpeechRecognition = () => {
     if (recognition && !speechRecognitionActive) {
       recognition.start()
-      console.log("Speech recognition started.") // DEBUG: Log start
+      console.log("Speech recognition started.")
       setSpeechRecognitionActive(true)
     }
   }
@@ -65,7 +72,7 @@ export default function VideoNoteApp() {
   const stopSpeechRecognition = () => {
     if (recognition && speechRecognitionActive) {
       recognition.stop()
-      console.log("Speech recognition stopped.") // DEBUG: Log stop
+      console.log("Speech recognition stopped.")
       setSpeechRecognitionActive(false)
     }
   }
@@ -85,10 +92,10 @@ export default function VideoNoteApp() {
     setIsPaused(!isPaused)
     if (isPaused) {
       recognition?.start()
-      console.log("Speech recognition resumed.") // DEBUG: Log resume
+      console.log("Speech recognition resumed.")
     } else {
       recognition?.stop()
-      console.log("Speech recognition paused.") // DEBUG: Log pause
+      console.log("Speech recognition paused.")
     }
   }
 
@@ -163,7 +170,7 @@ export default function VideoNoteApp() {
             }
           </div>
           <div className={`px-4 pb-4 ${isNotesExpanded ? 'h-[calc(100%-4rem)] overflow-y-auto' : 'h-0 overflow-hidden'}`}>
-            <p className="text-sm text-gray-300">{note}</p>
+            <p className="text-sm text-gray-300">{note}{interimTranscript && <span className="text-gray-500"> ({interimTranscript})</span>}</p>
           </div>
         </div>
       </main>
