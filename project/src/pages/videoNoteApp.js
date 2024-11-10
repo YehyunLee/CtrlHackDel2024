@@ -38,18 +38,20 @@ export default function VideoNoteApp() {
   const initializeSpeechToText = () => {
     try {
       const onFinalised = (text) => {
+        console.log('onFinalized');
         console.log('note: ' + text)
         setNote(prevNote => prevNote + text + " ");
-        // setInterimTranscript("") // Clear interim transcript when finalized
+        setInterimTranscript("") // Clear interim transcript when finalized
       }
 
       const onAnythingSaid = (text) => {
+        console.log('onAnythingSaid');
         console.log('interim: ' + text);
-        // console.log('here');
         setInterimTranscript(text) // Update interim transcript
       }
 
       const onEndEvent = () => {
+        console.log('onEndEvent');
         if (isNoteTaking && !isPaused) {
           startListening()
         }
@@ -202,8 +204,10 @@ export default function VideoNoteApp() {
 
   const toggleNoteTaking = () => {
     if (!isNoteTaking) {
+      console.log('start listening');
       startListening()
     } else {
+      console.log('stop listening');
       stopListening()
       setIsPaused(false)
     }
@@ -211,6 +215,7 @@ export default function VideoNoteApp() {
   }
 
   const togglePause = () => {
+    console.log('is paused')
     setIsPaused(!isPaused)
     if (isPaused) {
       startListening()
