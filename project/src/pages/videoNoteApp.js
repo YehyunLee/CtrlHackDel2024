@@ -6,8 +6,6 @@ import { Camera, CameraOff, Mic, MicOff, Pause, Play, StopCircle, ChevronUp, Che
 import SpeechToText from 'speech-to-text'
 import TextWithLatex from './components/TextWithLatex';
 import MermaidChart from './components/MermaidChart';
-import TextWithLatex from './components/TextWithLatex';
-import MermaidChart from './components/MermaidChart';
 
 export default function VideoNoteApp() {
   const videoRef = useRef(null)
@@ -117,9 +115,7 @@ export default function VideoNoteApp() {
       setError(err.message)
     }
   }  
-  
-  const flipCamera = async () => {
-  
+
   const flipCamera = async () => {
     if (videoStream) {
       videoStream.getTracks().forEach(track => track.stop()) // Stop current stream
@@ -230,7 +226,7 @@ export default function VideoNoteApp() {
   const toggleNotesExpansion = () => {
     setIsNotesExpanded(!isNotesExpanded)
   }
-
+  
   return (
     <div className="min-h-screen bg-gray-900 text-white flex-grow flex-col">
       <main className="flex flex flex-col">
