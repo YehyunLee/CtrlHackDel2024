@@ -20,7 +20,7 @@ export default function Home() {
     <>
 
       <header>
-        <title>MagicQuil - AI-Powered Note Taking</title>
+        <title>MagicQuill - AI-Powered Note Taking</title>
         <meta name="description" content="Take smart notes with AI assistance" />
       </header>
 
