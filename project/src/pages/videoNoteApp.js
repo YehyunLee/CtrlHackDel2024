@@ -222,7 +222,7 @@ export default function VideoNoteApp() {
           muted={isMuted}
           className="w-full h-full object-cover"
         />
-        
+
         {/* Flash Effect */}
         <div
           className={`absolute inset-0 bg-white transition-opacity duration-150 pointer-events-none
@@ -260,7 +260,7 @@ export default function VideoNoteApp() {
                   onClick={togglePause}
                   className="p-2 rounded-full hover:bg-gray-800 transition-colors"
                 >
-                  {isPaused ? 
+                  {isPaused ?
                     <Play className="h-5 w-5" /> :
                     <Pause className="h-5 w-5" />
                   }
@@ -309,7 +309,7 @@ export default function VideoNoteApp() {
             <button
               type="submit"
               className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg
-                disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Generate Note
             </button>
@@ -322,21 +322,20 @@ export default function VideoNoteApp() {
                 <button
                   onClick={speakSummary}
                   className={`p-2 rounded-full hover:bg-gray-700 transition-colors
-                    ${isSummarySpeaking ? 'bg-green-500/20' : ''}`}
+              ${isSummarySpeaking ? 'bg-green-500/20' : ''}`}
                 >
                   <Volume className={`h-5 w-5 ${isSummarySpeaking ? 'text-green-500' : ''}`} />
                 </button>
               </div>
 
-              <div className="h-48 overflow-y-auto">
-                <div className="space-y-4">
-                  {response.map((message, index) => (
-                    <div key={index} className="bg-gray-700 border border-gray-600 rounded-lg p-4">
-                      <TextWithLatex text={message.message} />
-                      {message.flowchart && <MermaidChart chart={message.flowchart} />}
-                    </div>
-                  ))}
-                </div>
+              {/* Removed h-48 and overflow-y-auto */}
+              <div className="space-y-4">
+                {response.map((message, index) => (
+                  <div key={index} className="bg-gray-700 border border-gray-600 rounded-lg p-4">
+                    <TextWithLatex text={message.message} />
+                    {message.flowchart && <MermaidChart chart={message.flowchart} />}
+                  </div>
+                ))}
               </div>
             </div>
           )}
