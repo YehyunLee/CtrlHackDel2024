@@ -298,7 +298,7 @@ export default function VideoNoteApp() {
           </button>
         </form>
         {response && (
-          <div className="mt-4 text-gray-300">
+          <div className="mt-4 text-gray-300 flex items-center justify-between">
             <h2 className="text-lg font-semibold">Summaries:</h2>
 
             <button
