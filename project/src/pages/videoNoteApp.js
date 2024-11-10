@@ -277,14 +277,14 @@ export default function VideoNoteApp() {
           </button>
         </form>
         {response.length > 0 && (
-          <div className="mt-4 text-gray-300">
+          <div className="mt-4 text-center text-gray-300">
             <h2 className="text-lg font-semibold">Summaries:</h2>
             {response.map((message, index) => (
               <TextWithLatex key={index} text={message} />
             ))}
           </div>
         )}
-        {response && <div><MermaidChart chart={response.flowchart} /></div>}
+        <MermaidChart chart={flowchart} />
       </footer>
     </div>
   )
