@@ -1,7 +1,7 @@
 import axios from 'axios';
 import FormData from 'form-data';
 
-export async function simpletexHandler(fileStream, filename) {
+export default async function simpletexHandler(fileStream, filename) {
   const SIMPLETEX_API_TOKEN = process.env.SIMPLETEX_API_TOKEN;
   const apiUrl = "https://server.simpletex.cn/api/simpletex_ocr";
 

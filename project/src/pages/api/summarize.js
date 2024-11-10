@@ -1,6 +1,6 @@
 import formidable from "formidable";
-import { geminiHandler } from "../helpers/gemini";
-import { simpletexHandler } from "../helpers/imageToText";
+import geminiHandler from "../helpers/gemini";
+import simpletexHandler from "../helpers/imageToText";
 import fs from 'fs';
 
 export const config = {
