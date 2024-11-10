@@ -308,7 +308,6 @@ export default function VideoNoteApp() {
           <form onSubmit={handleSubmit}>
             <button
               type="submit"
-              disabled={!file}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg
                 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
