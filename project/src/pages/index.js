@@ -2,6 +2,7 @@ import Image from "next/image";
 import localFont from "next/font/local";
 import VideoNoteApp from "./videoNoteApp";
 import Navbar from "./navBar";
+import Head from "next/head";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -17,7 +18,13 @@ const geistMono = localFont({
 export default function Home() {
   return (
     <>
-    <Navbar />
+
+      <header>
+        <title>SmartNote - AI-Powered Note Taking</title>
+        <meta name="description" content="Take smart notes with AI assistance" />
+      </header>
+
+      <Navbar />
       <VideoNoteApp />
     </>
   );
