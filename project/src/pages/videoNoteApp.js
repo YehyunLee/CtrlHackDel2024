@@ -34,15 +34,6 @@ export default function VideoNoteApp() {
     interimResults: true
   })
 
-  const flowchart = `
-  graph LR
-  A[Start] --> B{Is it working?}
-  B -- Yes --> C[Continue]
-  B -- No --> D[Fix it]
-  D --> B
-  C --> E[End]
-  `
-
   useEffect(() => {
     if (!browserSupportsSpeechRecognition) {
       setError("Browser doesn't support speech recognition.")
@@ -150,8 +141,10 @@ export default function VideoNoteApp() {
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`)
       const data = await res.json()
       console.log(data.message)
-      setResponse(prev => [...prev, data.message]) // Append new response to array
+      setResponse(prev => [...prev, data]) // Append new response to array
       console.log(response)
+      console.log(data)
+
     } catch (error) {
       console.error("Error:", error.message)
       setResponse(prev => [...prev, { message: "Error processing request", error: error.message }])
@@ -276,16 +269,19 @@ export default function VideoNoteApp() {
             Submit Snapshot
           </button>
         </form>
-        {response.length > 0 && (
-          <div className="mt-4 text-center text-gray-300">
+        {response && (
+          <div className="mt-4 text-gray-300">
             <h2 className="text-lg font-semibold">Summaries:</h2>
             {response.map((message, index) => (
-              <TextWithLatex key={index} text={message} />
+              <div key={index}>
+                <TextWithLatex text={message.message} />
+                <MermaidChart chart={message.flowchart} />
+              </div>
             ))}
           </div>
         )}
-        <MermaidChart chart={flowchart} />
-      </footer>
+        {/* {response.length > 0 && <div><MermaidChart chart={response.flowchart} /></div>} */}
+        </footer>
     </div>
   )
 }
