@@ -41,7 +41,12 @@ export default function VideoNoteApp() {
   const initializeSpeechToText = () => {
     try {
       const onFinalised = (text) => {
-        setNote(prevNote => prevNote + text + "\n")
+        setNote(prevNote => {
+          if (prevNote.trim() !== text.trim()) {
+            return prevNote + text + " ";
+          }
+          return prevNote;
+        })
         setInterimTranscript("") // Clear interim transcript when finalized
       }
 
