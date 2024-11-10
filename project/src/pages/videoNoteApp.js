@@ -16,6 +16,7 @@ export default function VideoNoteApp() {
   const [isNotesExpanded, setIsNotesExpanded] = useState(false)
   const [error, setError] = useState(null)
   const [file, setFile] = useState(null)
+  const [imagePreview, setImagePreview] = useState(null) // New state for image preview
   const [response, setResponse] = useState([])
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [videoStream, setVideoStream] = useState(null)
@@ -144,6 +145,11 @@ export default function VideoNoteApp() {
       canvas.width = video.videoWidth
       canvas.height = video.videoHeight
       context.drawImage(video, 0, 0, canvas.width, canvas.height)
+
+      // Create image preview URL
+      const imageUrl = canvas.toDataURL('image/jpeg')
+      setImagePreview(imageUrl)
+
       canvas.toBlob((blob) => {
         const file = new File([blob], "snapshot.jpg", { type: "image/jpeg" })
         setFile(file)
@@ -156,7 +162,7 @@ export default function VideoNoteApp() {
     console.log('submit')
     // if (!file) return
     const formData = new FormData()
-    formData.append("file", file ? file : '');
+    formData.append("file", file ? file : '')
     formData.append("note", note)
     console.log(file);
     console.log(note)
@@ -168,15 +174,17 @@ export default function VideoNoteApp() {
       })
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`)
       const data = await res.json()
-      console.log(data.message)
-      setResponse(prev => [...prev, data]) // Append new response to array
-      console.log(response)
-      console.log(data)
 
-      // Empty the live transcript
+      // Add the current image preview to the response data
+      setResponse(prev => [...prev, {
+        ...data,
+        imageUrl: imagePreview // Store the image URL with the response
+      }])
+
       setNote('')
       // Reset the file as well
       setFile(null)
+      setImagePreview(null) // Clear the preview after submission
 
     } catch (error) {
       console.error("Error:", error.message)
@@ -277,6 +285,21 @@ export default function VideoNoteApp() {
       </div>
 
       {/* Rest of the components remain the same */}
+
+
+      {/* Preview Section - Add this new section */}
+      {imagePreview && (
+        <div className="mx-4 mt-4 bg-gray-800 border border-gray-700 rounded-lg p-4">
+          <h2 className="text-lg font-semibold text-gray-100 mb-2">Current Snapshot</h2>
+          <img
+            src={imagePreview}
+            alt="Current snapshot"
+            className="w-full rounded-lg object-cover"
+          />
+        </div>
+      )}
+
+
       {/* Transcript Section */}
       <div className="m-4 bg-gray-800 border border-gray-700 rounded-lg">
         <div className="p-4">
@@ -320,34 +343,47 @@ export default function VideoNoteApp() {
             </button>
           </form>
 
-          {response.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-100">Summaries</h2>
-                <button
-                  onClick={speakSummary}
-                  className={`p-2 rounded-full hover:bg-gray-700 transition-colors
-              ${isSummarySpeaking ? 'bg-green-500/20' : ''}`}
-                >
-                  <Volume className={`h-5 w-5 ${isSummarySpeaking ? 'text-green-500' : ''}`} />
-                </button>
-              </div>
 
-              {/* Removed h-48 and overflow-y-auto */}
-              <div className="space-y-4">
-                {response.map((message, index) => (
-                  <div key={index} className="bg-gray-700 border border-gray-600 rounded-lg p-4">
-                    <TextWithLatex text={message.message} />
-                    {message.flowchart && <MermaidChart chart={message.flowchart} />}
-                  </div>
-                ))}
+
+          {/* Modify the Summaries section to include images */}
+          {response.length > 0 && (
+            <div className="m-4 mt-0 bg-gray-800 border border-gray-700 rounded-lg">
+              <div className="p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-gray-100">Summaries</h2>
+                  <button
+                    onClick={speakSummary}
+                    className={`p-2 rounded-full hover:bg-gray-700 transition-colors
+                  ${isSummarySpeaking ? 'bg-green-500/20' : ''}`}
+                  >
+                    <Volume className={`h-5 w-5 ${isSummarySpeaking ? 'text-green-500' : ''}`} />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {response.map((message, index) => (
+                    <div key={index} className="bg-gray-700 border border-gray-600 rounded-lg p-4">
+                      {/* Display the image if it exists */}
+                      {message.imageUrl && (
+                        <div className="mb-4">
+                          <img
+                            src={message.imageUrl}
+                            alt={`Snapshot ${index + 1}`}
+                            className="w-full rounded-lg object-cover"
+                          />
+                        </div>
+                      )}
+                      <TextWithLatex text={message.message} />
+                      {message.flowchart && <MermaidChart chart={message.flowchart} />}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}
-        </div>
-      </div>
-
-      <canvas ref={canvasRef} className="hidden" />
-    </div>
+          <canvas ref={canvasRef} className="hidden" />
+        </div >
+      </div >
+    </div >
   )
 }
