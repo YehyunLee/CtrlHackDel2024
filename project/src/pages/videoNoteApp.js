@@ -175,6 +175,8 @@ export default function VideoNoteApp() {
 
       // Empty the live transcript
       setNote('')
+      // Reset the file as well
+      setFile(null)
 
     } catch (error) {
       console.error("Error:", error.message)
