@@ -16,7 +16,7 @@ export default function VideoNoteApp() {
   const [isNotesExpanded, setIsNotesExpanded] = useState(false)
   const [error, setError] = useState(null)
   const [file, setFile] = useState(null)
-  const [response, setResponse] = useState(null)
+  const [response, setResponse] = useState([])
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [videoStream, setVideoStream] = useState(null)
   const [currentDeviceId, setCurrentDeviceId] = useState(null)
@@ -149,10 +149,12 @@ export default function VideoNoteApp() {
       })
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`)
       const data = await res.json()
-      setResponse(data)
+      console.log(data.message)
+      setResponse(prev => [...prev, data.message]) // Append new response to array
+      console.log(response)
     } catch (error) {
       console.error("Error:", error.message)
-      setResponse({ message: "Error processing request", error: error.message })
+      setResponse(prev => [...prev, { message: "Error processing request", error: error.message }])
     }
   }
 
@@ -274,7 +276,14 @@ export default function VideoNoteApp() {
             Submit Snapshot
           </button>
         </form>
-        {response && <div className="mt-4 text-center text-gray-300"><h2 className="text-lg font-semibold">Summary: </h2><TextWithLatex text={response.message}/></div>}
+        {response.length > 0 && (
+          <div className="mt-4 text-center text-gray-300">
+            <h2 className="text-lg font-semibold">Summaries:</h2>
+            {response.map((message, index) => (
+              <TextWithLatex key={index} text={message} />
+            ))}
+          </div>
+        )}
         <MermaidChart chart={flowchart} />
       </footer>
     </div>
