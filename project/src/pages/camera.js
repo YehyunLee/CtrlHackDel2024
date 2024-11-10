@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Camera, CameraOff, Mic, MicOff, Pause, Play, StopCircle, ChevronUp, ChevronDown, Volume2, VolumeX, Volume } from "lucide-react"
+import { Camera, CameraOff, Mic, MicOff, Pause, Play, StopCircle, ChevronUp, ChevronDown } from "lucide-react"
+import SpeechToText from 'speech-to-text'
 
 export default function VideoNoteApp() {
   const videoRef = useRef(null)
@@ -9,192 +10,93 @@ export default function VideoNoteApp() {
   const [isNoteTaking, setIsNoteTaking] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
-  const [isAudioOn, setIsAudioOn] = useState(false)
-  const [audioStream, setAudioStream] = useState(null)
   const [note, setNote] = useState("")
   const [interimTranscript, setInterimTranscript] = useState("")
   const [isNotesExpanded, setIsNotesExpanded] = useState(false)
+  const [listener, setListener] = useState(null)
   const [error, setError] = useState(null)
-  const [isSpeaking, setIsSpeaking] = useState(false)
-  const [recognition, setRecognition] = useState(null)
-  const [speechRecognitionActive, setSpeechRecognitionActive] = useState(false)
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
-      if (SpeechRecognition) {
-        const newRecognition = new SpeechRecognition()
-        newRecognition.continuous = true
-        newRecognition.interimResults = true
-
-        newRecognition.onresult = (event) => {
-          let interim = ""
-          let final = ""
-
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            const transcript = event.results[i][0].transcript
-            if (event.results[i].isFinal) {
-              final += transcript + " "
-            } else {
-              interim += transcript + " "
-            }
-          }
-
-          setNote((prevNote) => prevNote + final)
-          setInterimTranscript(interim)
-        }
-
-        newRecognition.onerror = (event) => {
-          console.error("SpeechRecognition error:", event.error)
-          setError(event.error)
-        }
-
-        newRecognition.onend = () => {
-          if (isNoteTaking && !isPaused) {
-            newRecognition.start()
-          }
-        }
-
-        setRecognition(newRecognition)
-      } else {
-        console.error("SpeechRecognition API is not supported in this browser.")
-        setError("SpeechRecognition API is not supported in this browser.")
+    initializeSpeechToText()
+    return () => {
+      if (listener) {
+        listener.stopListening()
       }
     }
   }, [])
 
-  const startSpeechRecognition = () => {
-    if (recognition && !speechRecognitionActive) {
-      recognition.start()
-      setSpeechRecognitionActive(true)
-    }
-  }
+  const initializeSpeechToText = () => {
+    try {
+      const onAnythingSaid = (text) => {
+        setInterimTranscript(text)
+      }
 
-  const stopSpeechRecognition = () => {
-    if (recognition && speechRecognitionActive) {
-      recognition.stop()
-      setSpeechRecognitionActive(false)
-    }
-
-  }
-
-
-
-
-  const speakNote = () => {
-    if (isSpeaking) {
-      // Stop the ongoing speech output
-      window.speechSynthesis.cancel()
-      setIsSpeaking(false)
-    } else {
-      if ('speechSynthesis' in window) {
-        const utterance = new SpeechSynthesisUtterance(note)
-        utterance.onend = () => {
-          // When speech ends, set state to false
-          setIsSpeaking(false)
+      const onEndEvent = () => {
+        if (isNoteTaking && !isPaused) {
+          startListening()
         }
-        window.speechSynthesis.speak(utterance)
-        setIsSpeaking(true) // Speech is now active
-      } else {
-        console.error("SpeechSynthesis API is not supported in this browser.")
+      }
+
+      const onFinalised = (text) => {
+        setNote(prevNote => prevNote + text + " ")
+        setInterimTranscript("")
+      }
+
+      const newListener = new SpeechToText(
+        onFinalised,
+        onEndEvent,
+        onAnythingSaid
+      )
+      setListener(newListener)
+    } catch (error) {
+      console.error("Speech to text initialization error:", error)
+      setError(error.message)
+    }
+  }
+
+  const startListening = () => {
+    if (listener) {
+      try {
+        listener.startListening()
+      } catch (error) {
+        console.error("Error starting speech recognition:", error)
+        setError(error.message)
       }
     }
   }
 
-
+  const stopListening = () => {
+    if (listener) {
+      listener.stopListening()
+    }
+  }
 
   const toggleCamera = async () => {
     if (!isCameraOn) {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: false  // Don't request audio with camera
-        })
-
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
         if (videoRef.current) {
-          // If audio is already on, we need to combine the streams
-          if (audioStream) {
-            const tracks = [...stream.getTracks(), ...audioStream.getTracks()]
-            const combinedStream = new MediaStream(tracks)
-            videoRef.current.srcObject = combinedStream
-          } else {
-            videoRef.current.srcObject = stream
-          }
+          videoRef.current.srcObject = stream
         }
         setIsCameraOn(true)
       } catch (err) {
-        console.error("Error accessing the camera:", err)
+        console.error("Error accessing the camera and/or microphone:", err)
+        setError(err.message)
       }
     } else {
       if (videoRef.current && videoRef.current.srcObject) {
-        // Only stop video tracks
-        videoRef.current.srcObject.getVideoTracks().forEach(track => track.stop())
-
-        // If audio is on, keep the audio stream
-        if (audioStream) {
-          videoRef.current.srcObject = audioStream
-        } else {
-          videoRef.current.srcObject = null
-        }
+        videoRef.current.srcObject.getTracks().forEach(track => track.stop())
+        videoRef.current.srcObject = null
       }
       setIsCameraOn(false)
     }
   }
 
-
-  const toggleAudio = async () => {
-    if (!isAudioOn) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-          video: false
-        })
-
-        if (videoRef.current) {
-          // If camera is on, combine with existing video stream
-          if (isCameraOn && videoRef.current.srcObject) {
-            const videoTracks = videoRef.current.srcObject.getVideoTracks()
-            const combinedStream = new MediaStream([...videoTracks, ...stream.getTracks()])
-            videoRef.current.srcObject = combinedStream
-          } else {
-            videoRef.current.srcObject = stream
-          }
-        }
-        setAudioStream(stream)
-        setIsAudioOn(true)
-      } catch (err) {
-        console.error("Error accessing the microphone:", err)
-      }
-    } else {
-      if (audioStream) {
-        audioStream.getTracks().forEach(track => track.stop())
-
-        // If camera is on, keep only video stream
-        if (isCameraOn && videoRef.current && videoRef.current.srcObject) {
-          const videoTracks = videoRef.current.srcObject.getVideoTracks()
-          if (videoTracks.length > 0) {
-            const videoOnlyStream = new MediaStream(videoTracks)
-            videoRef.current.srcObject = videoOnlyStream
-          } else {
-            videoRef.current.srcObject = null
-          }
-        } else {
-          if (videoRef.current) {
-            videoRef.current.srcObject = null
-          }
-        }
-        setAudioStream(null)
-      }
-      setIsAudioOn(false)
-    }
-  }
-
-
   const toggleNoteTaking = () => {
     if (!isNoteTaking) {
-      startSpeechRecognition()
+      startListening()
     } else {
-      stopSpeechRecognition()
+      stopListening()
       setIsPaused(false)
     }
     setIsNoteTaking(!isNoteTaking)
@@ -203,31 +105,18 @@ export default function VideoNoteApp() {
   const togglePause = () => {
     setIsPaused(!isPaused)
     if (isPaused) {
-      startSpeechRecognition()
+      startListening()
     } else {
-      stopSpeechRecognition()
+      stopListening()
     }
   }
-
 
   const toggleMute = () => {
-    // Need to pause the speech-to-text recognition via stopSpeechRecognition()
-    if (!isMuted) {
-      if (audioStream) {
-        audioStream.getAudioTracks().forEach(track => track.enabled = false)
-      }
-      stopSpeechRecognition()
-    } else {
-      if (audioStream) {
-        audioStream.getAudioTracks().forEach(track => track.enabled = true)
-      }
-      if (isNoteTaking && !isPaused) {
-        startSpeechRecognition()
-      }
+    if (videoRef.current) {
+      videoRef.current.muted = !videoRef.current.muted
+      setIsMuted(!isMuted)
     }
-    setIsMuted(!isMuted)
   }
-
 
   const toggleNotesExpansion = () => {
     setIsNotesExpanded(!isNotesExpanded)
@@ -250,19 +139,9 @@ export default function VideoNoteApp() {
               className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
               aria-label={isCameraOn ? "Turn off camera" : "Turn on camera"}
             >
-              {isCameraOn ?
-                <Camera className="h-6 w-6 text-white" /> :
+              {isCameraOn ? 
+                <Camera className="h-6 w-6 text-white" /> : 
                 <CameraOff className="h-6 w-6 text-white" />
-              }
-            </button>
-            <button
-              onClick={toggleAudio}
-              className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
-              aria-label={isAudioOn ? "Turn off audio" : "Turn on audio"}
-            >
-              {isAudioOn ?
-                <Volume2 className="h-6 w-6 text-white" /> :
-                <VolumeX className="h-6 w-6 text-white" />
               }
             </button>
             <button
@@ -278,8 +157,8 @@ export default function VideoNoteApp() {
                 className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
                 aria-label={isPaused ? "Resume recording" : "Pause recording"}
               >
-                {isPaused ?
-                  <Play className="h-6 w-6 text-white" /> :
+                {isPaused ? 
+                  <Play className="h-6 w-6 text-white" /> : 
                   <Pause className="h-6 w-6 text-white" />
                 }
               </button>
@@ -289,36 +168,24 @@ export default function VideoNoteApp() {
               className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
               aria-label={isMuted ? "Unmute microphone" : "Mute microphone"}
             >
-              {isMuted ?
-                <MicOff className="h-6 w-6 text-white" /> :
+              {isMuted ? 
+                <MicOff className="h-6 w-6 text-white" /> : 
                 <Mic className="h-6 w-6 text-white" />
               }
             </button>
-            <button
-              onClick={speakNote}
-              className={`p-2 rounded-full transition-colors ${isSpeaking ? 'bg-green-600' : 'bg-gray-800/80 hover:bg-gray-700/80'
-                }`}
-              aria-label={isSpeaking ? "Stop speaking note" : "Play note as sound"}
-            >
-              {isSpeaking ?
-                <Volume className="h-6 w-6 text-yellow-500" /> :
-                <Volume className="h-6 w-6 text-white" />
-              }
-            </button>
-
           </div>
         </div>
-        <div
+        <div 
           className={`bg-gray-800 transition-all duration-300 ease-in-out ${isNotesExpanded ? 'h-1/2' : 'h-20'}`}
         >
-          <div
+          <div 
             className="flex items-center justify-between p-4 cursor-pointer"
             onClick={toggleNotesExpansion}
           >
             <h2 className="text-lg font-semibold">Generated Notes</h2>
             {error && <p className="text-red-500 text-sm">Error: {error}</p>}
-            {isNotesExpanded ?
-              <ChevronDown className="h-6 w-6" /> :
+            {isNotesExpanded ? 
+              <ChevronDown className="h-6 w-6" /> : 
               <ChevronUp className="h-6 w-6" />
             }
           </div>
