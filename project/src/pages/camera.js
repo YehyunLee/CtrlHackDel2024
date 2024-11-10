@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Camera, CameraOff, Mic, MicOff, Pause, Play, StopCircle, ChevronUp, ChevronDown, Image } from "lucide-react"
+import { Camera, CameraOff, Mic, MicOff, Pause, Play, StopCircle, ChevronUp, ChevronDown, Image, Volume2, VolumeX, Volume } from "lucide-react"
 import SpeechToText from 'speech-to-text'
 
 export default function VideoNoteApp() {
@@ -18,6 +18,7 @@ export default function VideoNoteApp() {
   const [error, setError] = useState(null)
   const [file, setFile] = useState(null)
   const [response, setResponse] = useState(null)
+  const [isSpeaking, setIsSpeaking] = useState(false)
 
   useEffect(() => {
     initializeSpeechToText()
@@ -37,6 +38,11 @@ export default function VideoNoteApp() {
     try {
       const onFinalised = (text) => {
         setNote(prevNote => prevNote + text + " ")
+        setInterimTranscript("") // Clear interim transcript when finalized
+      }
+
+      const onAnythingSaid = (text) => {
+        setInterimTranscript(text) // Update interim transcript
       }
 
       const onEndEvent = () => {
@@ -45,11 +51,11 @@ export default function VideoNoteApp() {
         }
       }
 
-      // Initialize the listener without onAnythingSaid
+      // Initialize the listener with onAnythingSaid
       const newListener = new SpeechToText(
         onFinalised,
         onEndEvent,
-        null  // Pass null since we're not using onAnythingSaid
+        onAnythingSaid
       )
 
       // Set continuous recognition to true
@@ -61,7 +67,6 @@ export default function VideoNoteApp() {
       setError(error.message)
     }
   }
-
 
   const startListening = () => {
     if (listener) {
@@ -100,6 +105,29 @@ export default function VideoNoteApp() {
       setIsCameraOn(false)
     }
   }
+
+
+  const speakNote = () => {
+    if (isSpeaking) {
+      // Stop the ongoing speech output
+      window.speechSynthesis.cancel()
+      setIsSpeaking(false)
+    } else {
+      if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(note)
+        utterance.onend = () => {
+          // When speech ends, set state to false
+          setIsSpeaking(false)
+        }
+        window.speechSynthesis.speak(utterance)
+        setIsSpeaking(true) // Speech is now active
+      } else {
+        console.error("SpeechSynthesis API is not supported in this browser.")
+      }
+    }
+  }
+
+
 
   const takeSnapshot = () => {
     console.log("snap")
@@ -241,6 +269,21 @@ export default function VideoNoteApp() {
                 <Mic className="h-6 w-6 text-white" />
               }
             </button>
+
+            <button
+              onClick={speakNote}
+              className={`p-2 rounded-full transition-colors ${isSpeaking ? 'bg-green-600' : 'bg-gray-800/80 hover:bg-gray-700/80'
+                }`}
+              aria-label={isSpeaking ? "Stop speaking note" : "Play note as sound"}
+            >
+              {isSpeaking ?
+                <Volume className="h-6 w-6 text-yellow-500" /> :
+                <Volume className="h-6 w-6 text-white" />
+              }
+            </button>
+
+
+
           </div>
         </div>
         <div
