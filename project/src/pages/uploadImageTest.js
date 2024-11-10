@@ -1,3 +1,4 @@
+'use client'
 import { useState } from 'react';
 
 export default function UploadImage() {
@@ -10,19 +11,29 @@ export default function UploadImage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     if (!file) return;
-
+    console.log(file);
     const formData = new FormData();
     formData.append("file", file);
-
-    const res = await fetch('/api/imageToText', {
-      method: 'POST',
-      body: formData
-    });
-    
-    const data = await res.json();
-    setResponse(data);
+  
+    try {
+      const res = await fetch('/api/imageToText', {
+        method: 'POST',
+        body: formData,
+      });
+  
+      if (!res.ok) {
+        // Handle HTTP errors
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+  
+      const data = await res.json();
+      setResponse(data);
+    } catch (error) {
+      console.error("Error:", error.message);
+      setResponse({ message: "Error processing request", error: error.message });
+    }
   };
 
   return (
