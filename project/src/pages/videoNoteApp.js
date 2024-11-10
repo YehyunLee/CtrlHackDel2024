@@ -6,8 +6,8 @@ import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognitio
 import TextWithLatex from './components/TextWithLatex'
 import MermaidChart from './components/MermaidChart'
 
-import { jsPDF } from 'jspdf'
-import html2canvas from 'html2canvas'
+// import { jsPDF } from 'jspdf'
+// import html2canvas from 'html2canvas'
 
 export default function VideoNoteApp() {
   const videoRef = useRef(null)
@@ -227,16 +227,16 @@ export default function VideoNoteApp() {
     setIsNotesExpanded(!isNotesExpanded)
   }
 
-  const generatePDF = () => {
-    const input = document.getElementById('summary-section'); // ID of the container holding your summaries
+  // const generatePDF = () => {
+  //   const input = document.getElementById('summary-section'); // ID of the container holding your summaries
 
-    html2canvas(input, { backgroundColor: 'black' }).then((canvas) => {
-      const pdf = new jsPDF();
-      const imgData = canvas.toDataURL('image/png');
-      pdf.addImage(imgData, 'PNG', 10, 10, 180, 280); // Customize size and position if needed
-      pdf.save('summary.pdf');
-    });
-  };
+  //   html2canvas(input, { backgroundColor: 'black' }).then((canvas) => {
+  //     const pdf = new jsPDF();
+  //     const imgData = canvas.toDataURL('image/png');
+  //     pdf.addImage(imgData, 'PNG', 10, 10, 180, 280); // Customize size and position if needed
+  //     pdf.save('summary.pdf');
+  //   });
+  // };
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col">
@@ -354,13 +354,13 @@ export default function VideoNoteApp() {
               Generate Note
             </button>
           </form>
-          <button
+          {/* <button
             className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg
                       disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             onClick={generatePDF}
           >
             Generate PDF
-          </button>
+          </button> */}
 
   
           {/* Modify the Summaries section to include images */}
