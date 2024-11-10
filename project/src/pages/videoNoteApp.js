@@ -173,6 +173,9 @@ export default function VideoNoteApp() {
       console.log(response)
       console.log(data)
 
+      // Empty the live transcript
+      setNote('')
+
     } catch (error) {
       console.error("Error:", error.message)
       setResponse(prev => [...prev, { message: "Error processing request", error: error.message }])
