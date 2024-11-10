@@ -26,6 +26,7 @@ export default function VideoNoteApp() {
     initializeSpeechToText()
     return () => {
       if (listener) {
+        console.log('stop listening (1)')
         listener.stopListening()
       }
     }
@@ -73,6 +74,7 @@ export default function VideoNoteApp() {
   }
 
   const startListening = () => {
+    console.log('startListening called');
     if (listener) {
       try {
         listener.startListening()
@@ -84,6 +86,7 @@ export default function VideoNoteApp() {
   }
 
   const stopListening = () => {
+    console.log('stopListening called')
     if (listener) {
       listener.stopListening()
     }
@@ -207,7 +210,7 @@ export default function VideoNoteApp() {
       console.log('start listening');
       startListening()
     } else {
-      console.log('stop listening');
+      console.log('stop listening (2)');
       stopListening()
       setIsPaused(false)
     }
