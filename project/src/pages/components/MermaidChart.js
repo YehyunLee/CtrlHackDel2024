@@ -1,32 +1,35 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import mermaid from 'mermaid';
 
 const MermaidChart = ({ chart }) => {
+  const [isClient, setIsClient] = useState(false);
+
   useEffect(() => {
-    // Initialize mermaid
-    mermaid.initialize({
-      startOnLoad: true,
-    });
+    // Set isClient to true when the component mounts (only on the client side)
+    setIsClient(true);
+  }, []);
 
-    // Render the chart
-    const renderChart = () => {
+  useEffect(() => {
+    if (isClient && chart) {
+      // Initialize mermaid and render the chart only on the client side
+      mermaid.initialize({
+        startOnLoad: true,
+      });
+
       try {
-        mermaid.contentLoaded();
+        mermaid.contentLoaded(); // Process the chart
       } catch (error) {
-        console.error("Error rendering Mermaid chart:", error);
+        console.error('Error rendering Mermaid chart:', error);
       }
-    };
+    }
+  }, [isClient, chart]); // Re-run when chart changes
 
-    // Delay rendering until after the component is mounted
-    setTimeout(renderChart, 100);
+  if (!isClient) {
+    // Return a placeholder during server-side rendering
+    return null;
+  }
 
-  }, [chart]); // Re-run the effect if `chart` prop changes
-
-  return (
-    <div className="mermaid">
-      {chart}
-    </div>
-  );
+  return <div className="mermaid">{chart}</div>;
 };
 
 export default MermaidChart;
