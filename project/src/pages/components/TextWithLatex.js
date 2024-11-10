@@ -1,11 +1,15 @@
 // components/TextWithLatex.js
 import React from 'react';
 import katex from 'katex';
+import MarkdownIt from 'markdown-it';
+
+const md = new MarkdownIt();
 
 const TextWithLatex = ({ text }) => {
   if (!text) {
     return <div>No content provided</div>; // or any other fallback you prefer
   }
+
   // Regular expression to match LaTeX expressions enclosed by $$$$
   const parts = text.split(/(\$\$.*?\$\$)/);
 
@@ -14,7 +18,7 @@ const TextWithLatex = ({ text }) => {
       {parts.map((part, index) => {
         // Check if the part is a LaTeX expression
         if (part.startsWith('$$') && part.endsWith('$$')) {
-          const latexExpression = part.slice(2, -2); // Remove enclosing $$$
+          const latexExpression = part.slice(2, -2); // Remove enclosing $$
 
           try {
             const html = katex.renderToString(latexExpression, {
@@ -32,8 +36,14 @@ const TextWithLatex = ({ text }) => {
             return <span key={index}>{latexExpression}</span>;
           }
         }
-        // If not a LaTeX expression, render as plain text
-        return <span key={index}>{part}</span>;
+        // If not a LaTeX expression, render as Markdown
+        const markdownHtml = md.render(part);
+        return (
+          <span
+            key={index}
+            dangerouslySetInnerHTML={{ __html: markdownHtml }}
+          />
+        );
       })}
     </div>
   );
