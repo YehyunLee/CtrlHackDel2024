@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Camera, CameraOff, Mic, MicOff, Pause, Play, StopCircle, ChevronUp, ChevronDown } from "lucide-react"
+import SpeechToText from 'speech-to-text'
 
 export default function VideoNoteApp() {
   const videoRef = useRef(null)
@@ -12,44 +13,63 @@ export default function VideoNoteApp() {
   const [note, setNote] = useState("")
   const [interimTranscript, setInterimTranscript] = useState("")
   const [isNotesExpanded, setIsNotesExpanded] = useState(false)
-  const [speechRecognitionActive, setSpeechRecognitionActive] = useState(false)
-  const [recognition, setRecognition] = useState(null)
+  const [listener, setListener] = useState(null)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
-      if (SpeechRecognition) {
-        const newRecognition = new SpeechRecognition()
-        newRecognition.continuous = true
-        newRecognition.interimResults = true
-
-        newRecognition.onresult = (event) => {
-          let interim = ""
-          let final = ""
-
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            const transcript = event.results[i][0].transcript
-            if (event.results[i].isFinal) {
-              final += transcript + " "
-            } else {
-              interim += transcript + " "
-            }
-          }
-
-          setNote((prevNote) => prevNote + final)
-          setInterimTranscript(interim)
-        }
-
-        newRecognition.onerror = (event) => {
-          console.error("SpeechRecognition error:", event.error)
-        }
-
-        setRecognition(newRecognition)
-      } else {
-        console.error("SpeechRecognition API is not supported in this browser.")
+    initializeSpeechToText()
+    return () => {
+      if (listener) {
+        listener.stopListening()
       }
     }
   }, [])
+
+  const initializeSpeechToText = () => {
+    try {
+      const onAnythingSaid = (text) => {
+        setInterimTranscript(text)
+      }
+
+      const onEndEvent = () => {
+        if (isNoteTaking && !isPaused) {
+          startListening()
+        }
+      }
+
+      const onFinalised = (text) => {
+        setNote(prevNote => prevNote + text + " ")
+        setInterimTranscript("")
+      }
+
+      const newListener = new SpeechToText(
+        onFinalised,
+        onEndEvent,
+        onAnythingSaid
+      )
+      setListener(newListener)
+    } catch (error) {
+      console.error("Speech to text initialization error:", error)
+      setError(error.message)
+    }
+  }
+
+  const startListening = () => {
+    if (listener) {
+      try {
+        listener.startListening()
+      } catch (error) {
+        console.error("Error starting speech recognition:", error)
+        setError(error.message)
+      }
+    }
+  }
+
+  const stopListening = () => {
+    if (listener) {
+      listener.stopListening()
+    }
+  }
 
   const toggleCamera = async () => {
     if (!isCameraOn) {
@@ -61,6 +81,7 @@ export default function VideoNoteApp() {
         setIsCameraOn(true)
       } catch (err) {
         console.error("Error accessing the camera and/or microphone:", err)
+        setError(err.message)
       }
     } else {
       if (videoRef.current && videoRef.current.srcObject) {
@@ -71,27 +92,11 @@ export default function VideoNoteApp() {
     }
   }
 
-  const startSpeechRecognition = () => {
-    if (recognition && !speechRecognitionActive) {
-      recognition.start()
-      console.log("Speech recognition started.")
-      setSpeechRecognitionActive(true)
-    }
-  }
-
-  const stopSpeechRecognition = () => {
-    if (recognition && speechRecognitionActive) {
-      recognition.stop()
-      console.log("Speech recognition stopped.")
-      setSpeechRecognitionActive(false)
-    }
-  }
-
   const toggleNoteTaking = () => {
     if (!isNoteTaking) {
-      startSpeechRecognition()
+      startListening()
     } else {
-      stopSpeechRecognition()
+      stopListening()
       setIsPaused(false)
     }
     setIsNoteTaking(!isNoteTaking)
@@ -100,11 +105,9 @@ export default function VideoNoteApp() {
   const togglePause = () => {
     setIsPaused(!isPaused)
     if (isPaused) {
-      recognition?.start()
-      console.log("Speech recognition resumed.")
+      startListening()
     } else {
-      recognition?.stop()
-      console.log("Speech recognition paused.")
+      stopListening()
     }
   }
 
@@ -180,13 +183,17 @@ export default function VideoNoteApp() {
             onClick={toggleNotesExpansion}
           >
             <h2 className="text-lg font-semibold">Generated Notes</h2>
+            {error && <p className="text-red-500 text-sm">Error: {error}</p>}
             {isNotesExpanded ? 
               <ChevronDown className="h-6 w-6" /> : 
               <ChevronUp className="h-6 w-6" />
             }
           </div>
           <div className={`px-4 pb-4 ${isNotesExpanded ? 'h-[calc(100%-4rem)] overflow-y-auto' : 'h-0 overflow-hidden'}`}>
-            <p className="text-sm text-gray-300">{note}{interimTranscript && <span className="text-gray-500"> ({interimTranscript})</span>}</p>
+            <p className="text-sm text-gray-300">
+              {note}
+              {interimTranscript && <span className="text-gray-500"> ({interimTranscript})</span>}
+            </p>
           </div>
         </div>
       </main>
