@@ -156,9 +156,9 @@ export default function VideoNoteApp() {
 
 
   const takeSnapshot = () => {
-    console.log("snap")
-    console.log(videoRef.current)
-    console.log(canvasRef.current)
+    // console.log("snap")
+    // console.log(videoRef.current)
+    // console.log(canvasRef.current)
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current
       const canvas = canvasRef.current
@@ -168,22 +168,26 @@ export default function VideoNoteApp() {
       context.drawImage(video, 0, 0, canvas.width, canvas.height)
       canvas.toBlob((blob) => {
         const file = new File([blob], "snapshot.jpg", { type: "image/jpeg" })
-        console.log(file);
+        // console.log(file);
         setFile(file)
       }, "image/jpeg")
     }
   }
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    console.log("Im here")
-    if (!file) return
-    console.log(file)
-    const formData = new FormData()
-    formData.append("file", file)
+    e.preventDefault();
+    // console.log("Im here");
+    // console.log(note);
+    if (!file) return;
+    // console.log(file);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("note", note);
+    console.log(formData);
+    console.log(note);
 
     try {
-      const res = await fetch('/api/imageToText', {
+      const res = await fetch('/api/summarize', {
         method: 'POST',
         body: formData,
       })
