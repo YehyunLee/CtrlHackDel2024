@@ -3,6 +3,9 @@ import React from 'react';
 import katex from 'katex';
 
 const TextWithLatex = ({ text }) => {
+  if (!text) {
+    return <div>No content provided</div>; // or any other fallback you prefer
+  }
   // Regular expression to match LaTeX expressions enclosed by $$$$
   const parts = text.split(/(\$\$.*?\$\$)/);
 
