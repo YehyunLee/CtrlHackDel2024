@@ -52,7 +52,8 @@ export default function VideoNoteApp() {
   // Update note when final transcript is available
   useEffect(() => {
     if (finalTranscript !== '') {
-      setNote(prev => finalTranscript + ' ')
+      setNote(prev => prev + '\n' + finalTranscript) // Append the new transcription on a new line
+      resetTranscript() // Reset after capturing final transcript to avoid duplication
     }
   }, [finalTranscript])
 
@@ -241,13 +242,13 @@ export default function VideoNoteApp() {
         </div>
         <div className="bg-gray-800 p-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Live transcript: {listening ? '(Recording...)' : ''}</h2>
+            <h2 className="text-lg font-semibold">Live transcript:</h2>
             {error && <p className="text-red-500 text-sm">Error: {error}</p>}
           </div>
           <div className="px-4 pb-4 h-[calc(100%-4rem)] overflow-y-auto">
             <p className="text-sm text-gray-300 whitespace-pre-wrap">
               {note}
-              {interimTranscript && <span className="text-gray-500">{interimTranscript}</span>}
+              {interimTranscript && <span className="text-gray-500">{'\n' + interimTranscript}</span>} 
             </p>
           </div>
         </div>
