@@ -32,10 +32,11 @@ export default function VideoNoteApp() {
     console.log(file);
   }, [file])
 
+
   const initializeSpeechToText = () => {
     try {
-      const onAnythingSaid = (text) => {
-        setInterimTranscript(text)
+      const onFinalised = (text) => {
+        setNote(prevNote => prevNote + text + " ")
       }
 
       const onEndEvent = () => {
@@ -44,22 +45,23 @@ export default function VideoNoteApp() {
         }
       }
 
-      const onFinalised = (text) => {
-        setNote(prevNote => prevNote + text + " ")
-        setInterimTranscript("")
-      }
-
+      // Initialize the listener without onAnythingSaid
       const newListener = new SpeechToText(
         onFinalised,
         onEndEvent,
-        onAnythingSaid
+        null  // Pass null since we're not using onAnythingSaid
       )
+
+      // Set continuous recognition to true
+      newListener.recognition.continuous = true
+
       setListener(newListener)
     } catch (error) {
       console.error("Speech to text initialization error:", error)
       setError(error.message)
     }
   }
+
 
   const startListening = () => {
     if (listener) {
@@ -125,18 +127,18 @@ export default function VideoNoteApp() {
     console.log(file)
     const formData = new FormData()
     formData.append("file", file)
-  
+
     try {
       const res = await fetch('/api/imageToText', {
         method: 'POST',
         body: formData,
       })
-  
+
       if (!res.ok) {
         // Handle HTTP errors
         throw new Error(`HTTP error! status: ${res.status}`)
       }
-  
+
       const data = await res.json()
       setResponse(data)
     } catch (error) {
@@ -165,10 +167,14 @@ export default function VideoNoteApp() {
   }
 
   const toggleMute = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !videoRef.current.muted
-      setIsMuted(!isMuted)
+    // Call stopListening() to prevent interference with speech recognition
+    // startListening() will be called again when note taking is resumed
+    if (isMuted) {
+      startListening()
+    } else {
+      stopListening()
     }
+    setIsMuted(!isMuted)
   }
 
   const toggleNotesExpansion = () => {
@@ -192,8 +198,8 @@ export default function VideoNoteApp() {
               className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
               aria-label={isCameraOn ? "Turn off camera" : "Turn on camera"}
             >
-              {isCameraOn ? 
-                <Camera className="h-6 w-6 text-white" /> : 
+              {isCameraOn ?
+                <Camera className="h-6 w-6 text-white" /> :
                 <CameraOff className="h-6 w-6 text-white" />
               }
             </button>
@@ -219,8 +225,8 @@ export default function VideoNoteApp() {
                 className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
                 aria-label={isPaused ? "Resume recording" : "Pause recording"}
               >
-                {isPaused ? 
-                  <Play className="h-6 w-6 text-white" /> : 
+                {isPaused ?
+                  <Play className="h-6 w-6 text-white" /> :
                   <Pause className="h-6 w-6 text-white" />
                 }
               </button>
@@ -230,24 +236,24 @@ export default function VideoNoteApp() {
               className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
               aria-label={isMuted ? "Unmute microphone" : "Mute microphone"}
             >
-              {isMuted ? 
-                <MicOff className="h-6 w-6 text-white" /> : 
+              {isMuted ?
+                <MicOff className="h-6 w-6 text-white" /> :
                 <Mic className="h-6 w-6 text-white" />
               }
             </button>
           </div>
         </div>
-        <div 
+        <div
           className={`bg-gray-800 transition-all duration-300 ease-in-out ${isNotesExpanded ? 'h-1/2' : 'h-20'}`}
         >
-          <div 
+          <div
             className="flex items-center justify-between p-4 cursor-pointer"
             onClick={toggleNotesExpansion}
           >
             <h2 className="text-lg font-semibold">Generated Notes</h2>
             {error && <p className="text-red-500 text-sm">Error: {error}</p>}
-            {isNotesExpanded ? 
-              <ChevronDown className="h-6 w-6" /> : 
+            {isNotesExpanded ?
+              <ChevronDown className="h-6 w-6" /> :
               <ChevronUp className="h-6 w-6" />
             }
           </div>
@@ -262,7 +268,7 @@ export default function VideoNoteApp() {
       <canvas ref={canvasRef} className="hidden"></canvas>  {/* Hidden canvas for snapshot */}
       <footer className="p-4 bg-gray-800">
         <form onSubmit={handleSubmit}>
-          <button 
+          <button
             type="submit"
             className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-md w-full"
             disabled={!file}
