@@ -24,14 +24,19 @@ export default async function handler(req, res) {
             .status(500)
             .json({ message: "File parsing error", error: err.message });
         }
+        const file = Array.isArray(files.file) ? files.file[0] : files.file;
+
         if (!file || !file.filepath) {
+            console.log('parsing')
+            const { note } = fields;
+
             const system_prompt = "Act as a note-taker for lectures. You will be provided an audio transcript of the lecture, \
             alongside a visual transcription of any slides, equations, or other visual content the teacher is currently presenting.\
             The visual transcription may contain latex expressions or other mathematical notation. Using both the audio and visual transcripts \
             create a note that coherently and cohesively combines the two. Should the the content contain any information that would be more intuitively \
             represented as a chart (such as flow charts - recall that mermaid flowcharts should start with the word 'flowchart'. Also insert ), generate a mermaid js chart for this information. Surround the chart with ```mermaid   ```` Output only the generated note, keeping it clear and concise.";
             
-            let gemini_response = await geminiHandler(system_prompt + " Audio transcription: " + " Visual transcription: " + simpletex_response);
+            let gemini_response = await geminiHandler(system_prompt + " Audio transcription: " + note[0] + " Visual transcription: ");
             console.log("summary: " + gemini_response);
 
             const mermaidChartMatch = gemini_response.match(/```mermaid([\s\S]*?)```/);
@@ -42,7 +47,6 @@ export default async function handler(req, res) {
 
             res.status(200).json({message: gemini_response, flowchart: mermaidChart})
         } else {
-            const file = Array.isArray(files.file) ? files.file[0] : files.file;
             // if (!file || !file.filepath) {
             //   return res.status(400).json({ message: 'No file uploaded or file path is missing' });
             const fileStream = fs.createReadStream(file.filepath);
@@ -70,7 +74,6 @@ export default async function handler(req, res) {
             gemini_response = gemini_response.replace(/```mermaid[\s\S]*?```/, '');
 
             res.status(200).json({message: gemini_response, flowchart: mermaidChart})
-
         }
     });
 }

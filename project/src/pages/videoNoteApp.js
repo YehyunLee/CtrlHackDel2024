@@ -156,7 +156,7 @@ export default function VideoNoteApp() {
     console.log('submit')
     // if (!file) return
     const formData = new FormData()
-    formData.append("file", file ? file : null);
+    formData.append("file", file ? file : '');
     formData.append("note", note)
 
     try {
@@ -313,8 +313,6 @@ export default function VideoNoteApp() {
               }
             </button>
 
-
-
             {response.map((message, index) => (
               <div key={index}>
                 <TextWithLatex text={message.message} />
@@ -323,7 +321,6 @@ export default function VideoNoteApp() {
             ))}
           </div>
         )}
-        {/* {response.length > 0 && <div><MermaidChart chart={response.flowchart} /></div>} */}
       </footer>
     </div>
   )
