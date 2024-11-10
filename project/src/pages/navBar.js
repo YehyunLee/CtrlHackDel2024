@@ -8,7 +8,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="h-16 flex items-center">
           <Image src="/Logo.png" alt="Logo" width={128} height={64*2} />
-          {/* <span className="text-white font-semibold text-xl">MagicQuill</span> */}
+          {/* <span className="text-white font-semibold text-xl">magic.quill</span> */}
         </div>
       </div>
     </nav>
