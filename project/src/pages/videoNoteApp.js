@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Camera, CameraOff, Mic, MicOff, Pause, Play, StopCircle, ChevronUp, ChevronDown, Image, RefreshCcw } from "lucide-react"
-import SpeechToText from 'speech-to-text';
+import SpeechToText from 'speech-to-text'
 
 export default function VideoNoteApp() {
   const videoRef = useRef(null)
@@ -26,7 +26,6 @@ export default function VideoNoteApp() {
     initializeSpeechToText()
     return () => {
       if (listener) {
-        console.log('stop listening (1)')
         listener.stopListening()
       }
     }
@@ -39,20 +38,15 @@ export default function VideoNoteApp() {
   const initializeSpeechToText = () => {
     try {
       const onFinalised = (text) => {
-        console.log('onFinalized');
-        console.log('note: ' + text)
-        setNote(prevNote => prevNote + text + " ");
+        setNote(prevNote => prevNote + text + " ")
         setInterimTranscript("") // Clear interim transcript when finalized
       }
 
       const onAnythingSaid = (text) => {
-        console.log('onAnythingSaid');
-        console.log('interim: ' + text);
         setInterimTranscript(text) // Update interim transcript
       }
 
       const onEndEvent = () => {
-        console.log('onEndEvent');
         if (isNoteTaking && !isPaused) {
           startListening()
         }
@@ -74,7 +68,6 @@ export default function VideoNoteApp() {
   }
 
   const startListening = () => {
-    console.log('startListening called');
     if (listener) {
       try {
         listener.startListening()
@@ -86,7 +79,6 @@ export default function VideoNoteApp() {
   }
 
   const stopListening = () => {
-    console.log('stopListening called')
     if (listener) {
       listener.stopListening()
     }
@@ -207,10 +199,8 @@ export default function VideoNoteApp() {
 
   const toggleNoteTaking = () => {
     if (!isNoteTaking) {
-      console.log('start listening');
       startListening()
     } else {
-      console.log('stop listening (2)');
       stopListening()
       setIsPaused(false)
     }
@@ -218,7 +208,6 @@ export default function VideoNoteApp() {
   }
 
   const togglePause = () => {
-    console.log('is paused')
     setIsPaused(!isPaused)
     if (isPaused) {
       startListening()
@@ -321,7 +310,6 @@ export default function VideoNoteApp() {
                 <Volume className="h-6 w-6 text-white" />
               }
             </button> */}
-
           </div>
         </div>
         <div
@@ -338,11 +326,10 @@ export default function VideoNoteApp() {
               <ChevronUp className="h-6 w-6" />
             }
           </div>
-          <div className="px-4 pb-4">
+          <div className={`px-4 pb-4 ${isNotesExpanded ? 'h-[calc(100%-4rem)] overflow-y-auto' : 'h-0 overflow-hidden'}`}>
             <p className="text-sm text-gray-300">
-              {/* {note} */}
-              <span className="text-green-500"> ({interimTranscript})</span>
-              {/* {interimTranscript && <span className="text-green-500"> ({interimTranscript})</span>} */}
+              {note}
+              {interimTranscript && <span className="text-gray-500"> ({interimTranscript})</span>}
             </p>
           </div>
         </div>
