@@ -112,7 +112,7 @@ export default function VideoNoteApp() {
     // Toggle the camera device (front or back)
     const newFacingMode = currentDeviceId === 'environment' ? 'user' : 'environment' // Switch between 'user' (front) and 'environment' (back)
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: newFacingMode }, audio: true })
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: newFacingMode }, audio: false })
       setVideoStream(stream)
       if (videoRef.current) {
         videoRef.current.srcObject = stream
