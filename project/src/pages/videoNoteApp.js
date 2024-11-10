@@ -331,9 +331,10 @@ export default function VideoNoteApp() {
           </div>
           <div className="px-4 pb-4">
             <p className="text-sm text-gray-300">
-              {note}</p>
+              {/* {note} */}
               <span className="text-green-500"> ({interimTranscript})</span>
-            
+              {/* {interimTranscript && <span className="text-green-500"> ({interimTranscript})</span>} */}
+            </p>
           </div>
         </div>
       </main>
