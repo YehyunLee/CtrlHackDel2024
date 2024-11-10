@@ -354,6 +354,14 @@ export default function VideoNoteApp() {
               Generate Note
             </button>
           </form>
+          <button
+            className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg
+                      disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            onClick={generatePDF}
+          >
+            Generate PDF
+          </button>
+
   
           {/* Modify the Summaries section to include images */}
           {response.length > 0 && (
