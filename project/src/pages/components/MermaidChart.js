@@ -1,26 +1,31 @@
-// components/MermaidChart.js
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import mermaid from 'mermaid';
 
 const MermaidChart = ({ chart }) => {
-  const mermaidRef = useRef(null);
-
   useEffect(() => {
-    // Initialize Mermaid.js when the component mounts
-    mermaid.initialize({ startOnLoad: true });
+    // Initialize mermaid
+    mermaid.initialize({
+      startOnLoad: true,
+    });
 
-    // Render the chart if the reference exists
-    if (mermaidRef.current) {
-      mermaid.contentLoaded();
-    }
-  }, [chart]);
+    // Render the chart
+    const renderChart = () => {
+      try {
+        mermaid.contentLoaded();
+      } catch (error) {
+        console.error("Error rendering Mermaid chart:", error);
+      }
+    };
+
+    // Delay rendering until after the component is mounted
+    setTimeout(renderChart, 100);
+
+  }, [chart]); // Re-run the effect if `chart` prop changes
 
   return (
-    <div
-      ref={mermaidRef}
-      className="mermaid"
-      dangerouslySetInnerHTML={{ __html: chart }}
-    />
+    <div className="mermaid">
+      {chart}
+    </div>
   );
 };
 
