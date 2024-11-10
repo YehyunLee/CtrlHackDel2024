@@ -317,7 +317,7 @@ export default function VideoNoteApp() {
             {response.map((message, index) => (
               <div key={index}>
                 <TextWithLatex text={message.message} />
-                <MermaidChart chart={message.flowchart} />
+                {message.flowchart && <MermaidChart chart={message.flowchart} />}
               </div>
             ))}
           </div>
