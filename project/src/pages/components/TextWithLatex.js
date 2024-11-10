@@ -11,7 +11,7 @@ const TextWithLatex = ({ text }) => {
   }
 
   // Regular expression to match LaTeX expressions enclosed by $$$$
-  const parts = text.split(/(\$\$.*?\$\$)/);
+  const parts = text.split(/(\$.*?\$)/);
 
   return (
     <div>
