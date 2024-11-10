@@ -90,7 +90,7 @@ export default function VideoNoteApp() {
   const toggleCamera = async () => {
     if (!isCameraOn) {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: true }) // Start with back camera
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false }) // Start with back camera
         setVideoStream(stream)
         if (videoRef.current) {
           videoRef.current.srcObject = stream
