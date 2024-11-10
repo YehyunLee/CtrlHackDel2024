@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Camera, CameraOff, Mic, MicOff, Pause, Play, StopCircle, ChevronUp, ChevronDown, Image, Volume2, VolumeX, Volume, RefreshCcw } from "lucide-react"
+import { Camera, CameraOff, Mic, MicOff, Pause, Play, StopCircle, ChevronUp, ChevronDown, Image, RefreshCcw } from "lucide-react"
 import SpeechToText from 'speech-to-text'
 
 export default function VideoNoteApp() {
@@ -299,7 +299,7 @@ export default function VideoNoteApp() {
               }
             </button>
 
-            <button
+            {/* <button
               onClick={speakNote}
               className={`p-2 rounded-full transition-colors ${isSpeaking ? 'bg-green-600' : 'bg-gray-800/80 hover:bg-gray-700/80'
                 }`}
@@ -309,7 +309,7 @@ export default function VideoNoteApp() {
                 <Volume className="h-6 w-6 text-yellow-500" /> :
                 <Volume className="h-6 w-6 text-white" />
               }
-            </button>
+            </button> */}
 
 
 
