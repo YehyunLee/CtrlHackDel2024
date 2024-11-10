@@ -5,6 +5,8 @@ import { Camera, CameraOff, Mic, MicOff, Pause, Play, StopCircle, ChevronUp, Che
 import SpeechToText from 'speech-to-text'
 import TextWithLatex from './components/TextWithLatex';
 import MermaidChart from './components/MermaidChart';
+import TextWithLatex from './components/TextWithLatex';
+import MermaidChart from './components/MermaidChart';
 
 export default function VideoNoteApp() {
   const videoRef = useRef(null)
@@ -23,6 +25,15 @@ export default function VideoNoteApp() {
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [videoStream, setVideoStream] = useState(null)
   const [currentDeviceId, setCurrentDeviceId] = useState(null)
+
+  const flowchart = `
+  graph LR
+  A[Start] --> B{Is it working?}
+  B -- Yes --> C[Continue]
+  B -- No --> D[Fix it]
+  D --> B
+  C --> E[End]
+`;
 
   const flowchart = `
   graph LR
@@ -323,7 +334,21 @@ export default function VideoNoteApp() {
             </p>
           </div>
         </div>
-      </div>
-      </  div>
-      )
+      </main>
+      <canvas ref={canvasRef} className="hidden"></canvas>  {/* Hidden canvas for snapshot */}
+      <footer className="p-4 bg-gray-800">
+        <form onSubmit={handleSubmit}>
+          <button
+            type="submit"
+            className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-md w-full"
+            disabled={!file}
+          >
+            Submit Snapshot
+          </button>
+        </form>
+        {response && <div className="mt-4 text-gray-300"><TextWithLatex text={response.message}/> </div>}
+        <MermaidChart chart={flowchart} />
+      </footer>
+    </div>
+  )
 }
