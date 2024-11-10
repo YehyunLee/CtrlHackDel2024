@@ -6,6 +6,9 @@ import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognitio
 import TextWithLatex from './components/TextWithLatex'
 import MermaidChart from './components/MermaidChart'
 
+import { jsPDF } from 'jspdf'
+import html2canvas from 'html2canvas'
+
 export default function VideoNoteApp() {
   const videoRef = useRef(null)
   const canvasRef = useRef(null)
@@ -224,6 +227,17 @@ export default function VideoNoteApp() {
     setIsNotesExpanded(!isNotesExpanded)
   }
 
+  const generatePDF = () => {
+    const input = document.getElementById('summary-section'); // ID of the container holding your summaries
+
+    html2canvas(input, { backgroundColor: 'black' }).then((canvas) => {
+      const pdf = new jsPDF();
+      const imgData = canvas.toDataURL('image/png');
+      pdf.addImage(imgData, 'PNG', 10, 10, 180, 280); // Customize size and position if needed
+      pdf.save('summary.pdf');
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col">
       {/* Video Section */}
@@ -235,13 +249,13 @@ export default function VideoNoteApp() {
           muted={isMuted}
           className="w-full h-full object-cover"
         />
-
+  
         {/* Flash Effect */}
         <div
           className={`absolute inset-0 bg-white transition-opacity duration-150 pointer-events-none
             ${isFlashing ? 'opacity-50' : 'opacity-0'}`}
         />
-
+  
         {/* Camera Controls - Made more compact */}
         <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
           <div className="bg-gray-900/80 border border-gray-800 rounded-full px-2 py-2">
@@ -252,14 +266,14 @@ export default function VideoNoteApp() {
               >
                 <RefreshCcw className="h-5 w-5" />
               </button>
-
+  
               <button
                 onClick={takeSnapshot}
                 className="p-2 rounded-full hover:bg-gray-800 transition-colors transform active:scale-95"
               >
                 <Image className="h-5 w-5" />
               </button>
-
+  
               <button
                 onClick={toggleNoteTaking}
                 className={`p-2 rounded-full hover:bg-gray-800 transition-colors
@@ -267,7 +281,7 @@ export default function VideoNoteApp() {
               >
                 <StopCircle className={`h-5 w-5 ${isNoteTaking ? 'text-red-500' : ''}`} />
               </button>
-
+  
               {isNoteTaking && (
                 <button
                   onClick={togglePause}
@@ -283,10 +297,9 @@ export default function VideoNoteApp() {
           </div>
         </div>
       </div>
-
+  
       {/* Rest of the components remain the same */}
-
-
+  
       {/* Preview Section - Add this new section */}
       {imagePreview && (
         <div className="mx-4 mt-4 bg-gray-800 border border-gray-700 rounded-lg p-4">
@@ -298,8 +311,7 @@ export default function VideoNoteApp() {
           />
         </div>
       )}
-
-
+  
       {/* Transcript Section */}
       <div className="m-4 bg-gray-800 border border-gray-700 rounded-lg">
         <div className="p-4">
@@ -313,7 +325,7 @@ export default function VideoNoteApp() {
               <Volume className={`h-5 w-5 ${isTranscriptSpeaking ? 'text-green-500' : ''}`} />
             </button>
           </div>
-
+  
           <div className="h-48 overflow-y-auto">
             <div className="space-y-2">
               {error && (
@@ -329,7 +341,7 @@ export default function VideoNoteApp() {
           </div>
         </div>
       </div>
-
+  
       {/* Actions & Summary Section */}
       <div className="m-4 mt-0 bg-gray-800 border border-gray-700 rounded-lg">
         <div className="p-4 space-y-4">
@@ -337,14 +349,12 @@ export default function VideoNoteApp() {
             <button
               type="submit"
               className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg
-          disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Generate Note
             </button>
           </form>
-
-
-
+  
           {/* Modify the Summaries section to include images */}
           {response.length > 0 && (
             <div className="m-4 mt-0 bg-gray-800 border border-gray-700 rounded-lg">
@@ -354,17 +364,17 @@ export default function VideoNoteApp() {
                   <button
                     onClick={speakSummary}
                     className={`p-2 rounded-full hover:bg-gray-700 transition-colors
-                  ${isSummarySpeaking ? 'bg-green-500/20' : ''}`}
+                      ${isSummarySpeaking ? 'bg-green-500/20' : ''}`}
                   >
                     <Volume className={`h-5 w-5 ${isSummarySpeaking ? 'text-green-500' : ''}`} />
                   </button>
                 </div>
-
-                <div className="space-y-4">
+  
+                <div className="space-y-4" id="summary-section">
                   {response.map((message, index) => (
                     <div key={index} className="bg-gray-700 border border-gray-600 rounded-lg p-4">
-                      {/* Display the image if it exists */}
-                      {message.imageUrl && (
+                       {/* Display the image if it exists */}
+                       {message.imageUrl && (
                         <div className="mb-4">
                           <img
                             src={message.imageUrl}
@@ -381,9 +391,11 @@ export default function VideoNoteApp() {
               </div>
             </div>
           )}
+  
+          {/* Canvas (hidden for drawing purposes) */}
           <canvas ref={canvasRef} className="hidden" />
-        </div >
-      </div >
-    </div >
-  )
+        </div>
+      </div>
+    </div>
+  );  
 }
