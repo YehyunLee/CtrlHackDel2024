@@ -21,6 +21,8 @@ export default function VideoNoteApp() {
   const [videoStream, setVideoStream] = useState(null)
   const [currentDeviceId, setCurrentDeviceId] = useState(null)
   const [isFlashing, setIsFlashing] = useState(false)
+  const [isTranscriptSpeaking, setIsTranscriptSpeaking] = useState(false)
+  const [isSummarySpeaking, setIsSummarySpeaking] = useState(false)
 
   const {
     transcript,
@@ -51,7 +53,7 @@ export default function VideoNoteApp() {
 
   const startListening = () => {
     resetTranscript()
-    SpeechRecognition.startListening({ 
+    SpeechRecognition.startListening({
       continuous: true,
       interimResults: true
     })
@@ -73,7 +75,7 @@ export default function VideoNoteApp() {
       console.error("Error accessing the camera:", err)
       setError(err.message)
     }
-  }  
+  }
 
   const flipCamera = async () => {
     if (videoStream) {
@@ -93,19 +95,42 @@ export default function VideoNoteApp() {
     }
   }
 
-  const speakNote = () => {
-    if (isSpeaking) {
+
+  // Modify speak functions
+  const speakTranscript = () => {
+    if (isTranscriptSpeaking) {
       window.speechSynthesis.cancel()
-      setIsSpeaking(false)
+      setIsTranscriptSpeaking(false)
     } else {
       if ('speechSynthesis' in window) {
         const utterance = new SpeechSynthesisUtterance(note)
-        utterance.onend = () => setIsSpeaking(false)
+        utterance.onend = () => setIsTranscriptSpeaking(false)
         window.speechSynthesis.speak(utterance)
-        setIsSpeaking(true)
+        setIsTranscriptSpeaking(true)
       }
     }
   }
+
+  const speakSummary = () => {
+    if (isSummarySpeaking) {
+      window.speechSynthesis.cancel()
+      setIsSummarySpeaking(false)
+    } else {
+      if ('speechSynthesis' in window) {
+        // Extract text from response objects and join them
+        const textToSpeak = response
+          .map(item => typeof item === 'string' ? item : item.message || '')
+          .filter(Boolean)
+          .join('. ');
+
+        const utterance = new SpeechSynthesisUtterance(textToSpeak)
+        utterance.onend = () => setIsSummarySpeaking(false)
+        window.speechSynthesis.speak(utterance)
+        setIsSummarySpeaking(true)
+      }
+    }
+  }
+
 
   const takeSnapshot = () => {
     // Trigger flash animation
@@ -182,7 +207,7 @@ export default function VideoNoteApp() {
   const toggleNotesExpansion = () => {
     setIsNotesExpanded(!isNotesExpanded)
   }
-  
+
   return (
     <div className="min-h-screen bg-gray-900 text-white flex-grow flex-col">
       <main className="flex flex flex-col">
@@ -195,7 +220,7 @@ export default function VideoNoteApp() {
             className="w-full h-full object-cover"
           />
           {/* Flash overlay */}
-          <div 
+          <div
             className={`absolute inset-0 bg-white transition-opacity duration-150 pointer-events-none
               ${isFlashing ? 'opacity-50' : 'opacity-0'}`}
           />
@@ -233,27 +258,30 @@ export default function VideoNoteApp() {
                 }
               </button>
             )}
-            <button
-              onClick={speakNote}
-              className={`p-2 rounded-full transition-colors ${isSpeaking ? 'bg-green-600' : 'bg-gray-800/80 hover:bg-gray-700/80'}`}
-              aria-label={isSpeaking ? "Stop speaking note" : "Play note as sound"}
-            >
-              {isSpeaking ?
-                <Volume className="h-6 w-6 text-yellow-500" /> :
-                <Volume className="h-6 w-6 text-white" />
-              }
-            </button>
           </div>
         </div>
         <div className="bg-gray-800 p-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">Live transcript:</h2>
+
+            <button
+              onClick={speakTranscript}
+              className={`p-2 rounded-full transition-colors ${isTranscriptSpeaking ? 'bg-green-600' : 'bg-gray-800/80 hover:bg-gray-700/80'}`}
+              aria-label={isTranscriptSpeaking ? "Stop speaking transcript" : "Play transcript as sound"}
+            >
+              {isTranscriptSpeaking ?
+                <Volume className="h-6 w-6 text-yellow-500" /> :
+                <Volume className="h-6 w-6 text-white" />
+              }
+            </button>
+
+
             {error && <p className="text-red-500 text-sm">Error: {error}</p>}
           </div>
           <div className="px-4 pb-4 h-[calc(100%-4rem)] overflow-y-auto">
             <p className="text-sm text-gray-300 whitespace-pre-wrap">
               {note}
-              {interimTranscript && <span className="text-gray-500">{'\n' + interimTranscript}</span>} 
+              {interimTranscript && <span className="text-gray-500">{'\n' + interimTranscript}</span>}
             </p>
           </div>
         </div>
@@ -266,12 +294,26 @@ export default function VideoNoteApp() {
             className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-md w-full"
             disabled={!file}
           >
-            Submit Snapshot
+            Generate Note
           </button>
         </form>
         {response && (
           <div className="mt-4 text-gray-300">
             <h2 className="text-lg font-semibold">Summaries:</h2>
+
+            <button
+              onClick={speakSummary}
+              className={`p-2 rounded-full transition-colors ${isSummarySpeaking ? 'bg-green-600' : 'bg-gray-800/80 hover:bg-gray-700/80'}`}
+              aria-label={isSummarySpeaking ? "Stop speaking summary" : "Play summary as sound"}
+            >
+              {isSummarySpeaking ?
+                <Volume className="h-6 w-6 text-yellow-500" /> :
+                <Volume className="h-6 w-6 text-white" />
+              }
+            </button>
+
+
+
             {response.map((message, index) => (
               <div key={index}>
                 <TextWithLatex text={message.message} />
@@ -281,7 +323,7 @@ export default function VideoNoteApp() {
           </div>
         )}
         {/* {response.length > 0 && <div><MermaidChart chart={response.flowchart} /></div>} */}
-        </footer>
+      </footer>
     </div>
   )
 }
