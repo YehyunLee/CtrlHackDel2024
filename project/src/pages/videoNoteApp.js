@@ -153,9 +153,10 @@ export default function VideoNoteApp() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!file) return
+    console.log('submit')
+    // if (!file) return
     const formData = new FormData()
-    formData.append("file", file)
+    formData.append("file", file ? file : '');
     formData.append("note", note)
 
     try {
