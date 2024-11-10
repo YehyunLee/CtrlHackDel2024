@@ -16,6 +16,8 @@ export default function VideoNoteApp() {
   const [isNotesExpanded, setIsNotesExpanded] = useState(false)
   const [speechRecognitionActive, setSpeechRecognitionActive] = useState(false)
   const [recognition, setRecognition] = useState(null)
+  const [isSpeechRecognitionSupported, setIsSpeechRecognitionSupported] = useState(true)
+  const [isSpeaking, setIsSpeaking] = useState(false)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -49,6 +51,7 @@ export default function VideoNoteApp() {
         setRecognition(newRecognition)
       } else {
         console.error("SpeechRecognition API is not supported in this browser.")
+        setIsSpeechRecognitionSupported(false)
       }
     }
   }, [])
@@ -186,30 +189,23 @@ export default function VideoNoteApp() {
     setIsNotesExpanded(!isNotesExpanded)
   }
 
-
-  const [isSpeaking, setIsSpeaking] = useState(false)
-
   const speakNote = () => {
     if (isSpeaking) {
-      // Stop the ongoing speech output
       window.speechSynthesis.cancel()
       setIsSpeaking(false)
     } else {
       if ('speechSynthesis' in window) {
         const utterance = new SpeechSynthesisUtterance(note)
         utterance.onend = () => {
-          // When speech ends, set state to false
           setIsSpeaking(false)
         }
         window.speechSynthesis.speak(utterance)
-        setIsSpeaking(true) // Speech is now active
+        setIsSpeaking(true)
       } else {
         console.error("SpeechSynthesis API is not supported in this browser.")
       }
     }
   }
-
-
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col">
@@ -243,24 +239,33 @@ export default function VideoNoteApp() {
                 <VolumeX className="h-6 w-6 text-white" />
               }
             </button>
-            <button
-              onClick={toggleNoteTaking}
-              className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
-              aria-label={isNoteTaking ? "Stop taking notes" : "Start taking notes"}
-            >
-              <StopCircle className={`h-6 w-6 ${isNoteTaking ? 'text-red-500' : 'text-white'}`} />
-            </button>
-            {isNoteTaking && (
-              <button
-                onClick={togglePause}
-                className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
-                aria-label={isPaused ? "Resume recording" : "Pause recording"}
-              >
-                {isPaused ?
-                  <Play className="h-6 w-6 text-white" /> :
-                  <Pause className="h-6 w-6 text-white" />
-                }
-              </button>
+            {isSpeechRecognitionSupported ? (
+              <>
+                <button
+                  onClick={toggleNoteTaking}
+                  className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
+                  aria-label={isNoteTaking ? "Stop taking notes" : "Start taking notes"}
+                >
+                  <StopCircle className={`h-6 w-6 ${isNoteTaking ? 'text-red-500' : 'text-white'}`} />
+                </button>
+                {isNoteTaking && (
+                  <button
+                    onClick={togglePause}
+                    className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
+                    aria-label={isPaused ? "Resume recording" : "Pause recording"}
+                  >
+                    {isPaused ?
+                      <Play className="h-6 w-6 text-white" /> :
+                      <Pause className="h-6 w-6 text-white" />
+                    }
+                  </button>
+                )}
+              </>
+            ) : (
+              <div className="text-sm text-red-500 flex items-center">
+                <MicOff className="h-6 w-6 mr-2" />
+                Speech recognition is not supported on this device.
+              </div>
             )}
             <button
               onClick={toggleMute}
@@ -283,7 +288,6 @@ export default function VideoNoteApp() {
                 <Volume className="h-6 w-6 text-white" />
               }
             </button>
-
           </div>
         </div>
         <div
@@ -300,7 +304,10 @@ export default function VideoNoteApp() {
             }
           </div>
           <div className={`px-4 pb-4 ${isNotesExpanded ? 'h-[calc(100%-4rem)] overflow-y-auto' : 'h-0 overflow-hidden'}`}>
-            <p className="text-sm text-gray-300">{note}{interimTranscript && <span className="text-gray-500"> ({interimTranscript})</span>}</p>
+            <p className="text-sm text-gray-300">
+              {note}
+              {interimTranscript && <span className="text-gray-500"> ({interimTranscript})</span>}
+            </p>
           </div>
         </div>
       </main>
