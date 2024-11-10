@@ -209,121 +209,139 @@ export default function VideoNoteApp() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex-grow flex-col">
-      <main className="flex flex flex-col">
-        <div className="relative flex">
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted={isMuted}
-            className="w-full h-full object-cover"
-          />
-          {/* Flash overlay */}
-          <div
-            className={`absolute inset-0 bg-white transition-opacity duration-150 pointer-events-none
-              ${isFlashing ? 'opacity-50' : 'opacity-0'}`}
-          />
-          <div className="absolute bottom-4 left-4 right-4 flex justify-center space-x-4">
-            <button
-              onClick={flipCamera}
-              className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
-              aria-label="Flip camera"
-            >
-              <RefreshCcw className="h-6 w-6 text-white" />
-            </button>
-            <button
-              onClick={takeSnapshot}
-              className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors transform active:scale-90 transition-transform"
-              aria-label="Take snapshot"
-            >
-              <Image className="h-6 w-6 text-white" />
-            </button>
-            <button
-              onClick={toggleNoteTaking}
-              className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
-              aria-label={isNoteTaking ? "Stop taking notes" : "Start taking notes"}
-            >
-              <StopCircle className={`h-6 w-6 ${isNoteTaking ? 'text-red-500' : 'text-white'}`} />
-            </button>
-            {isNoteTaking && (
+    <div className="min-h-screen bg-gray-900 text-white flex flex-col">
+      {/* Video Section */}
+      <div className="relative w-full aspect-video bg-black">
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted={isMuted}
+          className="w-full h-full object-cover"
+        />
+        
+        {/* Flash Effect */}
+        <div
+          className={`absolute inset-0 bg-white transition-opacity duration-150 pointer-events-none
+            ${isFlashing ? 'opacity-50' : 'opacity-0'}`}
+        />
+
+        {/* Camera Controls - Made more compact */}
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+          <div className="bg-gray-900/80 border border-gray-800 rounded-full px-2 py-2">
+            <div className="flex items-center space-x-1">
               <button
-                onClick={togglePause}
-                className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
-                aria-label={isPaused ? "Resume recording" : "Pause recording"}
+                onClick={flipCamera}
+                className="p-2 rounded-full hover:bg-gray-800 transition-colors"
               >
-                {isPaused ?
-                  <Play className="h-6 w-6 text-white" /> :
-                  <Pause className="h-6 w-6 text-white" />
-                }
+                <RefreshCcw className="h-5 w-5" />
               </button>
-            )}
+
+              <button
+                onClick={takeSnapshot}
+                className="p-2 rounded-full hover:bg-gray-800 transition-colors transform active:scale-95"
+              >
+                <Image className="h-5 w-5" />
+              </button>
+
+              <button
+                onClick={toggleNoteTaking}
+                className={`p-2 rounded-full hover:bg-gray-800 transition-colors
+                  ${isNoteTaking ? 'bg-red-500/20' : ''}`}
+              >
+                <StopCircle className={`h-5 w-5 ${isNoteTaking ? 'text-red-500' : ''}`} />
+              </button>
+
+              {isNoteTaking && (
+                <button
+                  onClick={togglePause}
+                  className="p-2 rounded-full hover:bg-gray-800 transition-colors"
+                >
+                  {isPaused ? 
+                    <Play className="h-5 w-5" /> :
+                    <Pause className="h-5 w-5" />
+                  }
+                </button>
+              )}
+            </div>
           </div>
         </div>
-        <div className="bg-gray-800 p-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Live transcript:</h2>
+      </div>
 
+      {/* Rest of the components remain the same */}
+      {/* Transcript Section */}
+      <div className="m-4 bg-gray-800 border border-gray-700 rounded-lg">
+        <div className="p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-100">Live Transcript</h2>
             <button
               onClick={speakTranscript}
-              className={`p-2 rounded-full transition-colors ${isTranscriptSpeaking ? 'bg-green-600' : 'bg-gray-800/80 hover:bg-gray-700/80'}`}
-              aria-label={isTranscriptSpeaking ? "Stop speaking transcript" : "Play transcript as sound"}
+              className={`p-2 rounded-full hover:bg-gray-700 transition-colors
+                ${isTranscriptSpeaking ? 'bg-green-500/20' : ''}`}
             >
-              {isTranscriptSpeaking ?
-                <Volume className="h-6 w-6 text-yellow-500" /> :
-                <Volume className="h-6 w-6 text-white" />
-              }
+              <Volume className={`h-5 w-5 ${isTranscriptSpeaking ? 'text-green-500' : ''}`} />
             </button>
-
-
-            {error && <p className="text-red-500 text-sm">Error: {error}</p>}
           </div>
-          <div className="px-4 pb-4 h-[calc(100%-4rem)] overflow-y-auto">
-            <p className="text-sm text-gray-300 whitespace-pre-wrap">
-              {note}
-              {interimTranscript && <span className="text-gray-500">{'\n' + interimTranscript}</span>}
-            </p>
+
+          <div className="h-48 overflow-y-auto">
+            <div className="space-y-2">
+              {error && (
+                <p className="text-red-400 text-sm">{error}</p>
+              )}
+              <p className="text-sm text-gray-300 whitespace-pre-wrap">
+                {note}
+                {interimTranscript && (
+                  <span className="text-gray-500">{'\n' + interimTranscript}</span>
+                )}
+              </p>
+            </div>
           </div>
         </div>
-      </main>
-      <canvas ref={canvasRef} className="hidden"></canvas>
-      <footer className="p-4 bg-gray-800">
-        <form onSubmit={handleSubmit}>
-          <button
-            type="submit"
-            className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-md w-full"
-            disabled={!file}
-          >
-            Generate Note
-          </button>
-        </form>
-        {response && (
-          <div className="mt-4 text-gray-300 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Summaries:</h2>
+      </div>
 
+      {/* Actions & Summary Section */}
+      <div className="m-4 mt-0 bg-gray-800 border border-gray-700 rounded-lg">
+        <div className="p-4 space-y-4">
+          <form onSubmit={handleSubmit}>
             <button
-              onClick={speakSummary}
-              className={`p-2 rounded-full transition-colors ${isSummarySpeaking ? 'bg-green-600' : 'bg-gray-800/80 hover:bg-gray-700/80'}`}
-              aria-label={isSummarySpeaking ? "Stop speaking summary" : "Play summary as sound"}
+              type="submit"
+              disabled={!file}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg
+                disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {isSummarySpeaking ?
-                <Volume className="h-6 w-6 text-yellow-500" /> :
-                <Volume className="h-6 w-6 text-white" />
-              }
+              Generate Note
             </button>
+          </form>
 
-
-
-            {response.map((message, index) => (
-              <div key={index}>
-                <TextWithLatex text={message.message} />
-                {message.flowchart && <MermaidChart chart={message.flowchart} />}
+          {response.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-gray-100">Summaries</h2>
+                <button
+                  onClick={speakSummary}
+                  className={`p-2 rounded-full hover:bg-gray-700 transition-colors
+                    ${isSummarySpeaking ? 'bg-green-500/20' : ''}`}
+                >
+                  <Volume className={`h-5 w-5 ${isSummarySpeaking ? 'text-green-500' : ''}`} />
+                </button>
               </div>
-            ))}
-          </div>
-        )}
-        {/* {response.length > 0 && <div><MermaidChart chart={response.flowchart} /></div>} */}
-      </footer>
+
+              <div className="h-48 overflow-y-auto">
+                <div className="space-y-4">
+                  {response.map((message, index) => (
+                    <div key={index} className="bg-gray-700 border border-gray-600 rounded-lg p-4">
+                      <TextWithLatex text={message.message} />
+                      {message.flowchart && <MermaidChart chart={message.flowchart} />}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <canvas ref={canvasRef} className="hidden" />
     </div>
   )
 }
