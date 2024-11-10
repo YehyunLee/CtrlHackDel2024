@@ -35,7 +35,6 @@ export default function VideoNoteApp() {
     console.log(file);
   }, [file])
 
-
   const initializeSpeechToText = () => {
     try {
       const onFinalised = (text) => {
@@ -52,14 +51,12 @@ export default function VideoNoteApp() {
           startListening()
         }
       }
-
       // Initialize the listener with onAnythingSaid
       const newListener = new SpeechToText(
         onFinalised,
         onEndEvent,
         onAnythingSaid
       )
-
       // Set continuous recognition to true
       newListener.recognition.continuous = true
 
@@ -109,16 +106,13 @@ export default function VideoNoteApp() {
     }
   }
 
-
   const flipCamera = async () => {
     if (isCameraOn) {
       if (videoStream) {
         videoStream.getTracks().forEach(track => track.stop()) // Stop current stream
       }
-      
       // Toggle the camera device (front or back)
       const newFacingMode = currentDeviceId === 'environment' ? 'user' : 'environment' // Switch between 'user' (front) and 'environment' (back)
-
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: newFacingMode }, audio: true })
         setVideoStream(stream)
@@ -152,8 +146,6 @@ export default function VideoNoteApp() {
       }
     }
   }
-
-
 
   const takeSnapshot = () => {
     // console.log("snap")
