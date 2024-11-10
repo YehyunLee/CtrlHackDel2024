@@ -329,7 +329,7 @@ export default function VideoNoteApp() {
               <ChevronUp className="h-6 w-6" />
             }
           </div>
-          <div className={`px-4 pb-4 ${isNotesExpanded ? 'h-[calc(100%-4rem)] overflow-y-auto' : 'h-0 overflow-hidden'}`}>
+          <div className="px-4 pb-4">
             <p className="text-sm text-gray-300">
               {note}
               {interimTranscript && <span className="text-gray-500"> ({interimTranscript})</span>}
