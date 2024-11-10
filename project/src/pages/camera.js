@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Camera, CameraOff, Mic, MicOff, Pause, Play, StopCircle, ChevronUp, ChevronDown, Volume2, VolumeX } from "lucide-react"
+import { Camera, CameraOff, Mic, MicOff, Pause, Play, StopCircle, ChevronUp, ChevronDown, Volume2, VolumeX, Volume } from "lucide-react"
 
 export default function VideoNoteApp() {
   const videoRef = useRef(null)
@@ -56,11 +56,11 @@ export default function VideoNoteApp() {
   const toggleCamera = async () => {
     if (!isCameraOn) {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ 
+        const stream = await navigator.mediaDevices.getUserMedia({
           video: true,
           audio: false  // Don't request audio with camera
         })
-        
+
         if (videoRef.current) {
           // If audio is already on, we need to combine the streams
           if (audioStream) {
@@ -79,7 +79,7 @@ export default function VideoNoteApp() {
       if (videoRef.current && videoRef.current.srcObject) {
         // Only stop video tracks
         videoRef.current.srcObject.getVideoTracks().forEach(track => track.stop())
-        
+
         // If audio is on, keep the audio stream
         if (audioStream) {
           videoRef.current.srcObject = audioStream
@@ -94,11 +94,11 @@ export default function VideoNoteApp() {
   const toggleAudio = async () => {
     if (!isAudioOn) {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ 
+        const stream = await navigator.mediaDevices.getUserMedia({
           audio: true,
           video: false
         })
-        
+
         if (videoRef.current) {
           // If camera is on, combine with existing video stream
           if (isCameraOn && videoRef.current.srcObject) {
@@ -117,7 +117,7 @@ export default function VideoNoteApp() {
     } else {
       if (audioStream) {
         audioStream.getTracks().forEach(track => track.stop())
-        
+
         // If camera is on, keep only video stream
         if (isCameraOn && videoRef.current && videoRef.current.srcObject) {
           const videoTracks = videoRef.current.srcObject.getVideoTracks()
@@ -186,6 +186,31 @@ export default function VideoNoteApp() {
     setIsNotesExpanded(!isNotesExpanded)
   }
 
+
+  const [isSpeaking, setIsSpeaking] = useState(false)
+
+  const speakNote = () => {
+    if (isSpeaking) {
+      // Stop the ongoing speech output
+      window.speechSynthesis.cancel()
+      setIsSpeaking(false)
+    } else {
+      if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(note)
+        utterance.onend = () => {
+          // When speech ends, set state to false
+          setIsSpeaking(false)
+        }
+        window.speechSynthesis.speak(utterance)
+        setIsSpeaking(true) // Speech is now active
+      } else {
+        console.error("SpeechSynthesis API is not supported in this browser.")
+      }
+    }
+  }
+
+
+
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col">
       <main className="flex-grow flex flex-col">
@@ -203,8 +228,8 @@ export default function VideoNoteApp() {
               className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
               aria-label={isCameraOn ? "Turn off camera" : "Turn on camera"}
             >
-              {isCameraOn ? 
-                <Camera className="h-6 w-6 text-white" /> : 
+              {isCameraOn ?
+                <Camera className="h-6 w-6 text-white" /> :
                 <CameraOff className="h-6 w-6 text-white" />
               }
             </button>
@@ -213,8 +238,8 @@ export default function VideoNoteApp() {
               className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
               aria-label={isAudioOn ? "Turn off audio" : "Turn on audio"}
             >
-              {isAudioOn ? 
-                <Volume2 className="h-6 w-6 text-white" /> : 
+              {isAudioOn ?
+                <Volume2 className="h-6 w-6 text-white" /> :
                 <VolumeX className="h-6 w-6 text-white" />
               }
             </button>
@@ -231,8 +256,8 @@ export default function VideoNoteApp() {
                 className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
                 aria-label={isPaused ? "Resume recording" : "Pause recording"}
               >
-                {isPaused ? 
-                  <Play className="h-6 w-6 text-white" /> : 
+                {isPaused ?
+                  <Play className="h-6 w-6 text-white" /> :
                   <Pause className="h-6 w-6 text-white" />
                 }
               </button>
@@ -242,23 +267,35 @@ export default function VideoNoteApp() {
               className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
               aria-label={isMuted ? "Unmute microphone" : "Mute microphone"}
             >
-              {isMuted ? 
-                <MicOff className="h-6 w-6 text-white" /> : 
+              {isMuted ?
+                <MicOff className="h-6 w-6 text-white" /> :
                 <Mic className="h-6 w-6 text-white" />
               }
             </button>
+            <button
+              onClick={speakNote}
+              className={`p-2 rounded-full transition-colors ${isSpeaking ? 'bg-green-600' : 'bg-gray-800/80 hover:bg-gray-700/80'
+                }`}
+              aria-label={isSpeaking ? "Stop speaking note" : "Play note as sound"}
+            >
+              {isSpeaking ?
+                <Volume className="h-6 w-6 text-yellow-500" /> :
+                <Volume className="h-6 w-6 text-white" />
+              }
+            </button>
+
           </div>
         </div>
-        <div 
+        <div
           className={`bg-gray-800 transition-all duration-300 ease-in-out ${isNotesExpanded ? 'h-1/2' : 'h-20'}`}
         >
-          <div 
+          <div
             className="flex items-center justify-between p-4 cursor-pointer"
             onClick={toggleNotesExpansion}
           >
             <h2 className="text-lg font-semibold">Generated Notes</h2>
-            {isNotesExpanded ? 
-              <ChevronDown className="h-6 w-6" /> : 
+            {isNotesExpanded ?
+              <ChevronDown className="h-6 w-6" /> :
               <ChevronUp className="h-6 w-6" />
             }
           </div>
