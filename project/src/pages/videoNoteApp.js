@@ -43,7 +43,7 @@ export default function VideoNoteApp() {
       const onFinalised = (text) => {
         setNote(prevNote => {
           if (prevNote.trim() !== text.trim()) {
-            return prevNote + text + " ";
+            return text;
           }
           return prevNote;
         })
