@@ -73,7 +73,7 @@ export default function VideoNoteApp() {
         onEndEvent,
         onAnythingSaid
       )
-      
+
       // Set continuous recognition to true for continuous listening
       newListener.recognition.continuous = true
 
@@ -235,87 +235,87 @@ export default function VideoNoteApp() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col">
-      <main className="flex-grow flex flex-col">
-        <div className="relative flex-grow">
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted={isMuted}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute bottom-4 left-4 right-4 flex justify-center space-x-4">
-            <button
-              onClick={toggleCamera}
-              className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
-              aria-label={isCameraOn ? "Turn off camera" : "Turn on camera"}
-            >
-              {isCameraOn ?
-                <Camera className="h-6 w-6 text-white" /> :
-                <CameraOff className="h-6 w-6 text-white" />
-              }
-            </button>
-            <button
-              onClick={flipCamera}
-              className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
-              aria-label="Flip camera"
-            >
-              <RefreshCcw className="h-6 w-6 text-white" />
-            </button>
-            {isCameraOn && (
-              <button
-                onClick={takeSnapshot}
-                className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
-                aria-label="Take snapshot"
-              >
-                <Image className="h-6 w-6 text-white" />
-              </button>
-            )}
-            <button
-              onClick={toggleNoteTaking}
-              className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
-              aria-label={isNoteTaking ? "Stop taking notes" : "Start taking notes"}
-            >
-              <StopCircle className={`h-6 w-6 ${isNoteTaking ? 'text-red-500' : 'text-white'}`} />
-            </button>
-            {isNoteTaking && (
-              <button
-                onClick={togglePause}
-                className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
-                aria-label={isPaused ? "Resume recording" : "Pause recording"}
-              >
-                {isPaused ?
-                  <Play className="h-6 w-6 text-white" /> :
-                  <Pause className="h-6 w-6 text-white" />
-                }
-              </button>
-            )}
-            <button
-              onClick={toggleMute}
-              className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
-              aria-label={isMuted ? "Unmute microphone" : "Mute microphone"}
-            >
-              {isMuted ?
-                <MicOff className="h-6 w-6 text-white" /> :
-                <Mic className="h-6 w-6 text-white" />
-              }
-            </button>
-          </div>
-        </div>
-        <div
-          className={`bg-gray-800 transition-all duration-300 ease-in-out ${isNotesExpanded ? 'h-1/2' : 'h-20'}`}
-        >
-          <div
-            className="flex items-center justify-between p-4 cursor-pointer"
-            onClick={toggleNotesExpansion}
+      <div className="relative flex-grow">
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted={isMuted}
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute bottom-4 left-4 right-4 flex justify-center space-x-4">
+          <button
+            onClick={toggleCamera}
+            className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
+            aria-label={isCameraOn ? "Turn off camera" : "Turn on camera"}
           >
-            <h2 className="text-lg font-semibold">Generated Notes</h2>
-            {error && <p className="text-red-500 text-sm">Error: {error}</p>}
-            {isNotesExpanded ?
-              <ChevronDown className="h-6 w-6" /> :
-              <ChevronUp className="h-6 w-6" />
+            {isCameraOn ?
+              <Camera className="h-6 w-6 text-white" /> :
+              <CameraOff className="h-6 w-6 text-white" />
             }
-          </div>
+          </button>
+          <button
+            onClick={flipCamera}
+            className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
+            aria-label="Flip camera"
+          >
+            <RefreshCcw className="h-6 w-6 text-white" />
+          </button>
+          {isCameraOn && (
+            <button
+              onClick={takeSnapshot}
+              className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
+              aria-label="Take snapshot"
+            >
+              <Image className="h-6 w-6 text-white" />
+            </button>
+          )}
+          <button
+            onClick={toggleNoteTaking}
+            className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
+            aria-label={isNoteTaking ? "Stop taking notes" : "Start taking notes"}
+          >
+            <StopCircle className={`h-6 w-6 ${isNoteTaking ? 'text-red-500' : 'text-white'}`} />
+          </button>
+          {isNoteTaking && (
+            <button
+              onClick={togglePause}
+              className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
+              aria-label={isPaused ? "Resume recording" : "Pause recording"}
+            >
+              {isPaused ?
+                <Play className="h-6 w-6 text-white" /> :
+                <Pause className="h-6 w-6 text-white" />
+              }
+            </button>
+          )}
+          <button
+            onClick={toggleMute}
+            className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
+            aria-label={isMuted ? "Unmute microphone" : "Mute microphone"}
+          >
+            {isMuted ?
+              <MicOff className="h-6 w-6 text-white" /> :
+              <Mic className="h-6 w-6 text-white" />
+            }
+          </button>
+        </div>
+      </div>
+      <div
+        className={`bg-gray-800 transition-all duration-300 ease-in-out ${isNotesExpanded ? 'h-1/2' : 'h-20'}`}
+      >
+        <div
+          className="flex items-center justify-between p-4 cursor-pointer"
+          onClick={toggleNotesExpansion}
+        >
+          <h2 className="text-lg font-semibold">Generated Notes</h2>
+          {error && <p className="text-red-500 text-sm">Error: {error}</p>}
+          {isNotesExpanded ?
+            <ChevronDown className="h-6 w-6" /> :
+            <ChevronUp className="h-6 w-6" />
+          }
+        </div>
+        <div className={`px-4 pb-4 ${isNotesExpanded ? 'h-[calc(100%-4rem)] overflow-y-auto' : 'h-0 overflow-hidden'}`}>
           <div className={`px-4 pb-4 ${isNotesExpanded ? 'h-[calc(100%-4rem)] overflow-y-auto' : 'h-0 overflow-hidden'}`}>
             <p className="text-sm text-gray-300">
               {note}
@@ -323,20 +323,7 @@ export default function VideoNoteApp() {
             </p>
           </div>
         </div>
-      </main>
-      <canvas ref={canvasRef} className="hidden"></canvas>
-      <footer className="p-4 bg-gray-800">
-        <form onSubmit={handleSubmit}>
-          <button
-            type="submit"
-            className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-md w-full"
-            disabled={!file}
-          >
-            Submit Snapshot
-          </button>
-        </form>
-        {response && <div className="mt-4 text-center text-gray-300">{JSON.stringify(response, null, 2)}</div>}
-      </footer>
-    </div>
-  )
+      </div>
+      </  div>
+      )
 }
