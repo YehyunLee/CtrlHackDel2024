@@ -12,6 +12,8 @@ export default function VideoNoteApp() {
   const [isMuted, setIsMuted] = useState(false)
   const [isAudioOn, setIsAudioOn] = useState(false)
   const [audioStream, setAudioStream] = useState(null)
+  const [isAudioOn, setIsAudioOn] = useState(false)
+  const [audioStream, setAudioStream] = useState(null)
   const [note, setNote] = useState("")
   const [interimTranscript, setInterimTranscript] = useState("")
   const [isNotesExpanded, setIsNotesExpanded] = useState(false)
@@ -222,7 +224,19 @@ export default function VideoNoteApp() {
             >
               {isCameraOn ?
                 <Camera className="h-6 w-6 text-white" /> :
+              {isCameraOn ?
+                <Camera className="h-6 w-6 text-white" /> :
                 <CameraOff className="h-6 w-6 text-white" />
+              }
+            </button>
+            <button
+              onClick={toggleAudio}
+              className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
+              aria-label={isAudioOn ? "Turn off audio" : "Turn on audio"}
+            >
+              {isAudioOn ?
+                <Volume2 className="h-6 w-6 text-white" /> :
+                <VolumeX className="h-6 w-6 text-white" />
               }
             </button>
             <button
@@ -250,6 +264,8 @@ export default function VideoNoteApp() {
               >
                 {isPaused ?
                   <Play className="h-6 w-6 text-white" /> :
+                {isPaused ?
+                  <Play className="h-6 w-6 text-white" /> :
                   <Pause className="h-6 w-6 text-white" />
                 }
               </button>
@@ -259,6 +275,8 @@ export default function VideoNoteApp() {
               className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
               aria-label={isMuted ? "Unmute microphone" : "Mute microphone"}
             >
+              {isMuted ?
+                <MicOff className="h-6 w-6 text-white" /> :
               {isMuted ?
                 <MicOff className="h-6 w-6 text-white" /> :
                 <Mic className="h-6 w-6 text-white" />
@@ -277,8 +295,10 @@ export default function VideoNoteApp() {
           </div>
         </div>
         <div
+        <div
           className={`bg-gray-800 transition-all duration-300 ease-in-out ${isNotesExpanded ? 'h-1/2' : 'h-20'}`}
         >
+          <div
           <div
             className="flex items-center justify-between p-4 cursor-pointer"
             onClick={toggleNotesExpansion}

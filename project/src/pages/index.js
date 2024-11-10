@@ -1,6 +1,8 @@
 import Image from "next/image";
 import localFont from "next/font/local";
 import VideoNoteApp from "./camera";
+import { Upload } from "lucide-react";
+import UploadImage from "./uploadImageTest";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -15,6 +17,9 @@ const geistMono = localFont({
 
 export default function Home() {
   return (
-    <VideoNoteApp/>
+    <>
+      <VideoNoteApp />
+      <UploadImage />
+    </>
   );
 }
