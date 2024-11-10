@@ -9,7 +9,8 @@ export default function VideoNoteApp() {
   const [isNoteTaking, setIsNoteTaking] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
-  const [isAudioOn, setIsAudioOn] = useState(false)  // Audio off by default
+  const [isAudioOn, setIsAudioOn] = useState(false)
+  const [audioStream, setAudioStream] = useState(null)
   const [note, setNote] = useState("")
   const [interimTranscript, setInterimTranscript] = useState("")
   const [isNotesExpanded, setIsNotesExpanded] = useState(false)
@@ -56,32 +57,84 @@ export default function VideoNoteApp() {
     if (!isCameraOn) {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ 
-          video: true, 
-          audio: true  // Always request audio, we'll control it separately
+          video: true,
+          audio: false  // Don't request audio with camera
         })
+        
         if (videoRef.current) {
-          videoRef.current.srcObject = stream
+          // If audio is already on, we need to combine the streams
+          if (audioStream) {
+            const tracks = [...stream.getTracks(), ...audioStream.getTracks()]
+            const combinedStream = new MediaStream(tracks)
+            videoRef.current.srcObject = combinedStream
+          } else {
+            videoRef.current.srcObject = stream
+          }
         }
         setIsCameraOn(true)
       } catch (err) {
-        console.error("Error accessing the camera and/or microphone:", err)
+        console.error("Error accessing the camera:", err)
       }
     } else {
       if (videoRef.current && videoRef.current.srcObject) {
-        videoRef.current.srcObject.getTracks().forEach(track => track.stop())
-        videoRef.current.srcObject = null
+        // Only stop video tracks
+        videoRef.current.srcObject.getVideoTracks().forEach(track => track.stop())
+        
+        // If audio is on, keep the audio stream
+        if (audioStream) {
+          videoRef.current.srcObject = audioStream
+        } else {
+          videoRef.current.srcObject = null
+        }
       }
       setIsCameraOn(false)
     }
   }
 
-  const toggleAudio = () => {
-    if (videoRef.current && videoRef.current.srcObject) {
-      const audioTracks = videoRef.current.srcObject.getAudioTracks()
-      audioTracks.forEach(track => {
-        track.enabled = !isAudioOn
-      })
-      setIsAudioOn(!isAudioOn)
+  const toggleAudio = async () => {
+    if (!isAudioOn) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          audio: true,
+          video: false
+        })
+        
+        if (videoRef.current) {
+          // If camera is on, combine with existing video stream
+          if (isCameraOn && videoRef.current.srcObject) {
+            const videoTracks = videoRef.current.srcObject.getVideoTracks()
+            const combinedStream = new MediaStream([...videoTracks, ...stream.getTracks()])
+            videoRef.current.srcObject = combinedStream
+          } else {
+            videoRef.current.srcObject = stream
+          }
+        }
+        setAudioStream(stream)
+        setIsAudioOn(true)
+      } catch (err) {
+        console.error("Error accessing the microphone:", err)
+      }
+    } else {
+      if (audioStream) {
+        audioStream.getTracks().forEach(track => track.stop())
+        
+        // If camera is on, keep only video stream
+        if (isCameraOn && videoRef.current && videoRef.current.srcObject) {
+          const videoTracks = videoRef.current.srcObject.getVideoTracks()
+          if (videoTracks.length > 0) {
+            const videoOnlyStream = new MediaStream(videoTracks)
+            videoRef.current.srcObject = videoOnlyStream
+          } else {
+            videoRef.current.srcObject = null
+          }
+        } else {
+          if (videoRef.current) {
+            videoRef.current.srcObject = null
+          }
+        }
+        setAudioStream(null)
+      }
+      setIsAudioOn(false)
     }
   }
 
