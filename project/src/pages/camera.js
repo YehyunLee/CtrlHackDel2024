@@ -42,12 +42,12 @@ export default function VideoNoteApp() {
 
           setNote((prevNote) => prevNote + final)
           setInterimTranscript(interim)
-      }
+        }
 
         newRecognition.onerror = (event) => {
           console.error("SpeechRecognition error:", event.error)
           setError(event.error)
-    }
+        }
 
         newRecognition.onend = () => {
           if (isNoteTaking && !isPaused) {
@@ -59,8 +59,8 @@ export default function VideoNoteApp() {
       } else {
         console.error("SpeechRecognition API is not supported in this browser.")
         setError("SpeechRecognition API is not supported in this browser.")
+      }
     }
-  }
   }, [])
 
   const startSpeechRecognition = () => {
@@ -141,7 +141,7 @@ export default function VideoNoteApp() {
     }
   }
 
-  
+
   const toggleAudio = async () => {
     if (!isAudioOn) {
       try {
@@ -209,11 +209,26 @@ export default function VideoNoteApp() {
     }
   }
 
+
   const toggleMute = () => {
+    // Need to pause the speech-to-text recognition via stopSpeechRecognition()
+    if (!isMuted) {
+      if (audioStream) {
+        audioStream.getAudioTracks().forEach(track => track.enabled = false)
+      }
+      stopSpeechRecognition()
+    } else {
+      if (audioStream) {
+        audioStream.getAudioTracks().forEach(track => track.enabled = true)
+      }
+      if (isNoteTaking && !isPaused) {
+        startSpeechRecognition()
+      }
+    }
+    setIsMuted(!isMuted)
   }
 
 
-    
   const toggleNotesExpansion = () => {
     setIsNotesExpanded(!isNotesExpanded)
   }
@@ -235,8 +250,8 @@ export default function VideoNoteApp() {
               className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
               aria-label={isCameraOn ? "Turn off camera" : "Turn on camera"}
             >
-              {isCameraOn ? 
-                <Camera className="h-6 w-6 text-white" /> : 
+              {isCameraOn ?
+                <Camera className="h-6 w-6 text-white" /> :
                 <CameraOff className="h-6 w-6 text-white" />
               }
             </button>
@@ -263,8 +278,8 @@ export default function VideoNoteApp() {
                 className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
                 aria-label={isPaused ? "Resume recording" : "Pause recording"}
               >
-                {isPaused ? 
-                  <Play className="h-6 w-6 text-white" /> : 
+                {isPaused ?
+                  <Play className="h-6 w-6 text-white" /> :
                   <Pause className="h-6 w-6 text-white" />
                 }
               </button>
@@ -274,8 +289,8 @@ export default function VideoNoteApp() {
               className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
               aria-label={isMuted ? "Unmute microphone" : "Mute microphone"}
             >
-              {isMuted ? 
-                <MicOff className="h-6 w-6 text-white" /> : 
+              {isMuted ?
+                <MicOff className="h-6 w-6 text-white" /> :
                 <Mic className="h-6 w-6 text-white" />
               }
             </button>
@@ -293,17 +308,17 @@ export default function VideoNoteApp() {
 
           </div>
         </div>
-        <div 
+        <div
           className={`bg-gray-800 transition-all duration-300 ease-in-out ${isNotesExpanded ? 'h-1/2' : 'h-20'}`}
         >
-          <div 
+          <div
             className="flex items-center justify-between p-4 cursor-pointer"
             onClick={toggleNotesExpansion}
           >
             <h2 className="text-lg font-semibold">Generated Notes</h2>
             {error && <p className="text-red-500 text-sm">Error: {error}</p>}
-            {isNotesExpanded ? 
-              <ChevronDown className="h-6 w-6" /> : 
+            {isNotesExpanded ?
+              <ChevronDown className="h-6 w-6" /> :
               <ChevronUp className="h-6 w-6" />
             }
           </div>
