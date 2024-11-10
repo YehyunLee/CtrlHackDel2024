@@ -153,9 +153,10 @@ export default function VideoNoteApp() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!file) return
+    console.log('submit')
+    // if (!file) return
     const formData = new FormData()
-    formData.append("file", file)
+    formData.append("file", file ? file : null);
     formData.append("note", note)
 
     try {
@@ -292,7 +293,7 @@ export default function VideoNoteApp() {
           <button
             type="submit"
             className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-md w-full"
-            disabled={!file}
+            // disabled={!file}
           >
             Generate Note
           </button>
