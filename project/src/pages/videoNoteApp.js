@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Camera, CameraOff, Mic, MicOff, Pause, Play, StopCircle, ChevronUp, ChevronDown, Image, RefreshCcw } from "lucide-react"
-import SpeechToText from 'speech-to-text'
+import SpeechToText from 'speech-to-text';
 
 export default function VideoNoteApp() {
   const videoRef = useRef(null)
@@ -331,8 +331,8 @@ export default function VideoNoteApp() {
           </div>
           <div className={`px-4 pb-4 ${isNotesExpanded ? 'h-[calc(100%-4rem)] overflow-y-auto' : 'h-0 overflow-hidden'}`}>
             <p className="text-sm text-gray-300">
-              {note}
-              {interimTranscript && <span className="text-gray-500"> ({interimTranscript})</span>}
+              {/* {note} */}
+              {interimTranscript && <span className="text-green-500"> ({interimTranscript})</span>}
             </p>
           </div>
         </div>
