@@ -20,6 +20,7 @@ export default function VideoNoteApp() {
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [videoStream, setVideoStream] = useState(null)
   const [currentDeviceId, setCurrentDeviceId] = useState(null)
+  const [isFlashing, setIsFlashing] = useState(false)
 
   const {
     transcript,
@@ -52,8 +53,8 @@ export default function VideoNoteApp() {
   // Update note when final transcript is available
   useEffect(() => {
     if (finalTranscript !== '') {
-      setNote(prev => prev + '\n' + finalTranscript) // Append the new transcription on a new line
-      resetTranscript() // Reset after capturing final transcript to avoid duplication
+      setNote(prev => prev + '\n' + finalTranscript)
+      resetTranscript()
     }
   }, [finalTranscript])
 
@@ -116,6 +117,10 @@ export default function VideoNoteApp() {
   }
 
   const takeSnapshot = () => {
+    // Trigger flash animation
+    setIsFlashing(true)
+    setTimeout(() => setIsFlashing(false), 150) // Reset flash after animation
+
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current
       const canvas = canvasRef.current
@@ -194,6 +199,11 @@ export default function VideoNoteApp() {
             muted={isMuted}
             className="w-full h-full object-cover"
           />
+          {/* Flash overlay */}
+          <div 
+            className={`absolute inset-0 bg-white transition-opacity duration-150 pointer-events-none
+              ${isFlashing ? 'opacity-50' : 'opacity-0'}`}
+          />
           <div className="absolute bottom-4 left-4 right-4 flex justify-center space-x-4">
             <button
               onClick={flipCamera}
@@ -204,7 +214,7 @@ export default function VideoNoteApp() {
             </button>
             <button
               onClick={takeSnapshot}
-              className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
+              className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors transform active:scale-90 transition-transform"
               aria-label="Take snapshot"
             >
               <Image className="h-6 w-6 text-white" />
