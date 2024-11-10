@@ -19,8 +19,8 @@ const TextWithLatex = ({ text }) => {
         // Check if the part is a LaTeX expression
         if (part.startsWith('$') && part.endsWith('$')) {
             let ccount = 0;
-            for (let i = 0; i < array.length; i++) {
-                const element = array[i];
+            for (let i = 0; i < part.length; i++) {
+                const element = part[i];
                 if (element == '$') {
                     ccount++;
                 }
