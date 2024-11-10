@@ -1,27 +1,35 @@
-// components/MermaidChart.js
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import mermaid from 'mermaid';
 
 const MermaidChart = ({ chart }) => {
-  const mermaidRef = useRef(null);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    // Initialize Mermaid.js when the component mounts
-    mermaid.initialize({ startOnLoad: true });
+    // Set isClient to true when the component mounts (only on the client side)
+    setIsClient(true);
+  }, []);
 
-    // Render the chart if the reference exists
-    if (mermaidRef.current) {
-      mermaid.contentLoaded();
+  useEffect(() => {
+    if (isClient && chart) {
+      // Initialize mermaid and render the chart only on the client side
+      mermaid.initialize({
+        startOnLoad: true,
+      });
+
+      try {
+        mermaid.contentLoaded(); // Process the chart
+      } catch (error) {
+        console.error('Error rendering Mermaid chart:', error);
+      }
     }
-  }, [chart]);
+  }, [isClient, chart]); // Re-run when chart changes
 
-  return (
-    <div
-      ref={mermaidRef}
-      className="mermaid"
-      dangerouslySetInnerHTML={{ __html: chart }}
-    />
-  );
+  if (!isClient) {
+    // Return a placeholder during server-side rendering
+    return null;
+  }
+
+  return <div className="mermaid">{chart}</div>;
 };
 
 export default MermaidChart;
