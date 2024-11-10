@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Camera, CameraOff, Mic, MicOff, Pause, Play, StopCircle, ChevronUp, ChevronDown } from "lucide-react"
+import { Camera, CameraOff, Mic, MicOff, Pause, Play, StopCircle, ChevronUp, ChevronDown, Volume2, VolumeX } from "lucide-react"
 
 export default function VideoNoteApp() {
   const videoRef = useRef(null)
@@ -9,6 +9,7 @@ export default function VideoNoteApp() {
   const [isNoteTaking, setIsNoteTaking] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
+  const [isAudioOn, setIsAudioOn] = useState(false)  // Audio off by default
   const [note, setNote] = useState("")
   const [interimTranscript, setInterimTranscript] = useState("")
   const [isNotesExpanded, setIsNotesExpanded] = useState(false)
@@ -54,7 +55,10 @@ export default function VideoNoteApp() {
   const toggleCamera = async () => {
     if (!isCameraOn) {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: true, 
+          audio: true  // Always request audio, we'll control it separately
+        })
         if (videoRef.current) {
           videoRef.current.srcObject = stream
         }
@@ -68,6 +72,16 @@ export default function VideoNoteApp() {
         videoRef.current.srcObject = null
       }
       setIsCameraOn(false)
+    }
+  }
+
+  const toggleAudio = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const audioTracks = videoRef.current.srcObject.getAudioTracks()
+      audioTracks.forEach(track => {
+        track.enabled = !isAudioOn
+      })
+      setIsAudioOn(!isAudioOn)
     }
   }
 
@@ -139,6 +153,16 @@ export default function VideoNoteApp() {
               {isCameraOn ? 
                 <Camera className="h-6 w-6 text-white" /> : 
                 <CameraOff className="h-6 w-6 text-white" />
+              }
+            </button>
+            <button
+              onClick={toggleAudio}
+              className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
+              aria-label={isAudioOn ? "Turn off audio" : "Turn on audio"}
+            >
+              {isAudioOn ? 
+                <Volume2 className="h-6 w-6 text-white" /> : 
+                <VolumeX className="h-6 w-6 text-white" />
               }
             </button>
             <button
