@@ -2,28 +2,32 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Camera, CameraOff, Mic, MicOff, Pause, Play, StopCircle, ChevronUp, ChevronDown, Image, RefreshCcw, Volume } from "lucide-react"
-
-import SpeechToText from 'speech-to-text'
-import TextWithLatex from './components/TextWithLatex';
-import MermaidChart from './components/MermaidChart';
+import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition'
+import TextWithLatex from './components/TextWithLatex'
+import MermaidChart from './components/MermaidChart'
 
 export default function VideoNoteApp() {
   const videoRef = useRef(null)
   const canvasRef = useRef(null)
-  // const [isCameraOn, setIsCameraOn] = useState(false)
   const [isNoteTaking, setIsNoteTaking] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
   const [note, setNote] = useState("")
-  const [interimTranscript, setInterimTranscript] = useState("")
   const [isNotesExpanded, setIsNotesExpanded] = useState(false)
-  const [listener, setListener] = useState(null)
   const [error, setError] = useState(null)
   const [file, setFile] = useState(null)
   const [response, setResponse] = useState(null)
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [videoStream, setVideoStream] = useState(null)
   const [currentDeviceId, setCurrentDeviceId] = useState(null)
+
+  const {
+    transcript,
+    interimTranscript,
+    resetTranscript,
+    listening,
+    browserSupportsSpeechRecognition
+  } = useSpeechRecognition()
 
   const flowchart = `
   graph LR
@@ -32,105 +36,58 @@ export default function VideoNoteApp() {
   B -- No --> D[Fix it]
   D --> B
   C --> E[End]
-`;
+  `
 
   useEffect(() => {
-    initializeSpeechToText()
-    toggleCamera()
-    return () => {
-      if (listener) {
-        listener.stopListening()
-      }
+    if (!browserSupportsSpeechRecognition) {
+      setError("Browser doesn't support speech recognition.")
     }
+    toggleCamera()
   }, [])
 
   useEffect(() => {
-    console.log(file);
-  }, [file])
-
-  const initializeSpeechToText = () => {
-    try {
-      const onFinalised = (text) => {
-        setNote(prevNote => prevNote + text + "\n")
-        setInterimTranscript("") // Clear interim transcript when finalized
-      }
-
-      const onAnythingSaid = (text) => {
-        setInterimTranscript(text) // Update interim transcript
-      }
-
-      const onEndEvent = () => {
-        // Only restart listening if we're still in recording mode and not paused
-        if (isNoteTaking && !isPaused) {
-          // Add a small delay before restarting to prevent rapid restart cycles
-          setTimeout(() => {
-            startListening()
-          }, 100)
-        }
-      }
-
-      const newListener = new SpeechToText(
-        onFinalised,
-        onEndEvent,
-        onAnythingSaid
-      )
-
-      // Set continuous recognition to true for continuous listening
-      newListener.recognition.continuous = true
-
-      setListener(newListener)
-    } catch (error) {
-      console.error("Speech to text initialization error:", error)
-      setError(error.message)
+    if (transcript) {
+      setNote(prev => prev + transcript + "\n")
+      resetTranscript()
     }
-  }
+  }, [transcript])
 
   const startListening = () => {
-    if (listener) {
-      try {
-        listener.startListening()
-      } catch (error) {
-        console.error("Error starting speech recognition:", error)
-        setError(error.message)
-      }
-    }
+    SpeechRecognition.startListening({ continuous: true })
   }
 
   const stopListening = () => {
-    if (listener) {
-      listener.stopListening()
-    }
+    SpeechRecognition.stopListening()
   }
 
  const toggleCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false }) // Start with back camera
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false })
       setVideoStream(stream)
       if (videoRef.current) {
         videoRef.current.srcObject = stream
       }
-      setCurrentDeviceId('environment') // back camera ID
+      setCurrentDeviceId('environment')
     } catch (err) {
-      console.error("Error accessing the camera and/or microphone:", err)
+      console.error("Error accessing the camera:", err)
       setError(err.message)
     }
   }  
 
   const flipCamera = async () => {
     if (videoStream) {
-      videoStream.getTracks().forEach(track => track.stop()) // Stop current stream
+      videoStream.getTracks().forEach(track => track.stop())
     }
-    // Toggle the camera device (front or back)
-    const newFacingMode = currentDeviceId === 'environment' ? 'user' : 'environment' // Switch between 'user' (front) and 'environment' (back)
+    const newFacingMode = currentDeviceId === 'environment' ? 'user' : 'environment'
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: newFacingMode }, audio: false })
       setVideoStream(stream)
       if (videoRef.current) {
         videoRef.current.srcObject = stream
       }
-      setCurrentDeviceId(newFacingMode) // Update current camera device ID
+      setCurrentDeviceId(newFacingMode)
     } catch (err) {
-      console.error("Error flipping the camera:", err)
+      console.error("Error flipping camera:", err)
       setError(err.message)
     }
   }
@@ -144,13 +101,9 @@ export default function VideoNoteApp() {
     } else {
       if ('speechSynthesis' in window) {
         const utterance = new SpeechSynthesisUtterance(note)
-        utterance.onend = () => {
-          setIsSpeaking(false)
-        }
+        utterance.onend = () => setIsSpeaking(false)
         window.speechSynthesis.speak(utterance)
         setIsSpeaking(true)
-      } else {
-        console.error("SpeechSynthesis API is not supported in this browser.")
       }
     }
   }
@@ -171,22 +124,18 @@ export default function VideoNoteApp() {
   }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!file) return;
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("note", note);
+    e.preventDefault()
+    if (!file) return
+    const formData = new FormData()
+    formData.append("file", file)
+    formData.append("note", note)
 
     try {
       const res = await fetch('/api/summarize', {
         method: 'POST',
         body: formData,
       })
-
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`)
-      }
-
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`)
       const data = await res.json()
       setResponse(data)
     } catch (error) {
