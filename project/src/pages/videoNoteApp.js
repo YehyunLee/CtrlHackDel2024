@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Camera, CameraOff, Mic, MicOff, Pause, Play, StopCircle, ChevronUp, ChevronDown, Image, RefreshCcw } from "lucide-react"
+import { Camera, CameraOff, Mic, MicOff, Pause, Play, StopCircle, ChevronUp, ChevronDown, Image, Volume2, VolumeX, Volume } from "lucide-react"
 import SpeechToText from 'speech-to-text'
 
 export default function VideoNoteApp() {
@@ -19,8 +19,6 @@ export default function VideoNoteApp() {
   const [file, setFile] = useState(null)
   const [response, setResponse] = useState(null)
   const [isSpeaking, setIsSpeaking] = useState(false)
-  const [videoStream, setVideoStream] = useState(null)
-  const [currentDeviceId, setCurrentDeviceId] = useState(null)
 
   useEffect(() => {
     initializeSpeechToText()
@@ -34,6 +32,7 @@ export default function VideoNoteApp() {
   useEffect(() => {
     console.log(file);
   }, [file])
+
 
   const initializeSpeechToText = () => {
     try {
@@ -51,12 +50,14 @@ export default function VideoNoteApp() {
           startListening()
         }
       }
+
       // Initialize the listener with onAnythingSaid
       const newListener = new SpeechToText(
         onFinalised,
         onEndEvent,
         onAnythingSaid
       )
+
       // Set continuous recognition to true
       newListener.recognition.continuous = true
 
@@ -87,45 +88,24 @@ export default function VideoNoteApp() {
   const toggleCamera = async () => {
     if (!isCameraOn) {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: true }) // Start with back camera
-        setVideoStream(stream)
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
         if (videoRef.current) {
           videoRef.current.srcObject = stream
         }
         setIsCameraOn(true)
-        setCurrentDeviceId('environment') // back camera ID
       } catch (err) {
         console.error("Error accessing the camera and/or microphone:", err)
         setError(err.message)
       }
     } else {
-      if (videoStream) {
-        videoStream.getTracks().forEach(track => track.stop()) // Stop the current stream
+      if (videoRef.current && videoRef.current.srcObject) {
+        videoRef.current.srcObject.getTracks().forEach(track => track.stop())
+        videoRef.current.srcObject = null
       }
       setIsCameraOn(false)
     }
   }
 
-  const flipCamera = async () => {
-    if (isCameraOn) {
-      if (videoStream) {
-        videoStream.getTracks().forEach(track => track.stop()) // Stop current stream
-      }
-      // Toggle the camera device (front or back)
-      const newFacingMode = currentDeviceId === 'environment' ? 'user' : 'environment' // Switch between 'user' (front) and 'environment' (back)
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: newFacingMode }, audio: true })
-        setVideoStream(stream)
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream
-        }
-        setCurrentDeviceId(newFacingMode) // Update current camera device ID
-      } catch (err) {
-        console.error("Error flipping the camera:", err)
-        setError(err.message)
-      }
-    }
-  }
 
   const speakNote = () => {
     if (isSpeaking) {
@@ -147,10 +127,12 @@ export default function VideoNoteApp() {
     }
   }
 
+
+
   const takeSnapshot = () => {
-    // console.log("snap")
-    // console.log(videoRef.current)
-    // console.log(canvasRef.current)
+    console.log("snap")
+    console.log(videoRef.current)
+    console.log(canvasRef.current)
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current
       const canvas = canvasRef.current
@@ -160,26 +142,22 @@ export default function VideoNoteApp() {
       context.drawImage(video, 0, 0, canvas.width, canvas.height)
       canvas.toBlob((blob) => {
         const file = new File([blob], "snapshot.jpg", { type: "image/jpeg" })
-        // console.log(file);
+        console.log(file);
         setFile(file)
       }, "image/jpeg")
     }
   }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    // console.log("Im here");
-    // console.log(note);
-    if (!file) return;
-    // console.log(file);
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("note", note);
-    console.log(formData);
-    console.log(note);
+    e.preventDefault()
+    console.log("Im here")
+    if (!file) return
+    console.log(file)
+    const formData = new FormData()
+    formData.append("file", file)
 
     try {
-      const res = await fetch('/api/summarize', {
+      const res = await fetch('/api/imageToText', {
         method: 'POST',
         body: formData,
       })
@@ -253,13 +231,6 @@ export default function VideoNoteApp() {
                 <CameraOff className="h-6 w-6 text-white" />
               }
             </button>
-            <button
-              onClick={flipCamera}
-              className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
-              aria-label="Flip camera"
-            >
-              <RefreshCcw className="h-6 w-6 text-white" />
-            </button>
             {isCameraOn && (
               <button
                 onClick={takeSnapshot}
@@ -299,7 +270,7 @@ export default function VideoNoteApp() {
               }
             </button>
 
-            {/* <button
+            <button
               onClick={speakNote}
               className={`p-2 rounded-full transition-colors ${isSpeaking ? 'bg-green-600' : 'bg-gray-800/80 hover:bg-gray-700/80'
                 }`}
@@ -309,7 +280,7 @@ export default function VideoNoteApp() {
                 <Volume className="h-6 w-6 text-yellow-500" /> :
                 <Volume className="h-6 w-6 text-white" />
               }
-            </button> */}
+            </button>
 
 
 
