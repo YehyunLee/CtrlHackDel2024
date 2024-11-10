@@ -33,15 +33,6 @@ export default function VideoNoteApp() {
     interimResults: true
   })
 
-  const flowchart = `
-  graph LR
-  A[Start] --> B{Is it working?}
-  B -- Yes --> C[Continue]
-  B -- No --> D[Fix it]
-  D --> B
-  C --> E[End]
-  `
-
   useEffect(() => {
     if (!browserSupportsSpeechRecognition) {
       setError("Browser doesn't support speech recognition.")
@@ -263,8 +254,8 @@ export default function VideoNoteApp() {
             Submit Snapshot
           </button>
         </form>
-        {response && <div className="mt-4 text-center text-gray-300"><h2 className="text-lg font-semibold">Summary: </h2><TextWithLatex text={response.message}/></div>}
-        <MermaidChart chart={flowchart} />
+        {response && <div className="mt-4 text-gray-300"><h2 className="text-lg font-semibold">Summary: </h2><TextWithLatex text={response.message}/></div>}
+        {response && <div><MermaidChart chart={response.flowchart} /></div>}
       </footer>
     </div>
   )
