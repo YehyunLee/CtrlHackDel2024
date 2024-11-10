@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Camera, CameraOff, Mic, MicOff, Pause, Play, StopCircle, ChevronUp, ChevronDown, Image, RefreshCcw, Volume } from "lucide-react"
+
 import SpeechToText from 'speech-to-text'
 
 export default function VideoNoteApp() {
@@ -48,17 +49,22 @@ export default function VideoNoteApp() {
       }
 
       const onEndEvent = () => {
+        // Only restart listening if we're still in recording mode and not paused
         if (isNoteTaking && !isPaused) {
-          startListening()
+          // Add a small delay before restarting to prevent rapid restart cycles
+          setTimeout(() => {
+            startListening()
+          }, 100)
         }
       }
-      // Initialize the listener with onAnythingSaid
+
       const newListener = new SpeechToText(
         onFinalised,
         onEndEvent,
         onAnythingSaid
       )
-      // Set continuous recognition to true
+
+      // Set continuous recognition to true for continuous listening
       newListener.recognition.continuous = true
 
       setListener(newListener)
@@ -85,7 +91,7 @@ export default function VideoNoteApp() {
     }
   }
 
-  const toggleCamera = async () => {
+ const toggleCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false }) // Start with back camera
       setVideoStream(stream)
@@ -98,7 +104,7 @@ export default function VideoNoteApp() {
       setError(err.message)
     }
   }  
-
+  
   const flipCamera = async () => {
     if (videoStream) {
       videoStream.getTracks().forEach(track => track.stop()) // Stop current stream
@@ -118,20 +124,19 @@ export default function VideoNoteApp() {
     }
   }
 
+
   const speakNote = () => {
     if (isSpeaking) {
-      // Stop the ongoing speech output
       window.speechSynthesis.cancel()
       setIsSpeaking(false)
     } else {
       if ('speechSynthesis' in window) {
         const utterance = new SpeechSynthesisUtterance(note)
         utterance.onend = () => {
-          // When speech ends, set state to false
           setIsSpeaking(false)
         }
         window.speechSynthesis.speak(utterance)
-        setIsSpeaking(true) // Speech is now active
+        setIsSpeaking(true)
       } else {
         console.error("SpeechSynthesis API is not supported in this browser.")
       }
@@ -139,9 +144,6 @@ export default function VideoNoteApp() {
   }
 
   const takeSnapshot = () => {
-    // console.log("snap")
-    // console.log(videoRef.current)
-    // console.log(canvasRef.current)
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current
       const canvas = canvasRef.current
@@ -151,7 +153,6 @@ export default function VideoNoteApp() {
       context.drawImage(video, 0, 0, canvas.width, canvas.height)
       canvas.toBlob((blob) => {
         const file = new File([blob], "snapshot.jpg", { type: "image/jpeg" })
-        // console.log(file);
         setFile(file)
       }, "image/jpeg")
     }
@@ -159,15 +160,10 @@ export default function VideoNoteApp() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // console.log("Im here");
-    // console.log(note);
     if (!file) return;
-    // console.log(file);
     const formData = new FormData();
     formData.append("file", file);
     formData.append("note", note);
-    console.log(formData);
-    console.log(note);
 
     try {
       const res = await fetch('/api/summarize', {
@@ -176,7 +172,6 @@ export default function VideoNoteApp() {
       })
 
       if (!res.ok) {
-        // Handle HTTP errors
         throw new Error(`HTTP error! status: ${res.status}`)
       }
 
@@ -208,8 +203,6 @@ export default function VideoNoteApp() {
   }
 
   const toggleMute = () => {
-    // Call stopListening() to prevent interference with speech recognition
-    // startListening() will be called again when note taking is resumed
     if (isMuted) {
       startListening()
     } else {
