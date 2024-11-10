@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Camera, CameraOff, Mic, MicOff, Pause, Play, StopCircle, ChevronUp, ChevronDown } from "lucide-react"
+import { Camera, CameraOff, Mic, MicOff, Pause, Play, StopCircle, ChevronUp, ChevronDown, Image } from "lucide-react"
 import SpeechToText from 'speech-to-text'
 
 export default function VideoNoteApp() {
   const videoRef = useRef(null)
+  const canvasRef = useRef(null)
   const [isCameraOn, setIsCameraOn] = useState(false)
   const [isNoteTaking, setIsNoteTaking] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
@@ -15,6 +16,8 @@ export default function VideoNoteApp() {
   const [isNotesExpanded, setIsNotesExpanded] = useState(false)
   const [listener, setListener] = useState(null)
   const [error, setError] = useState(null)
+  const [file, setFile] = useState(null)
+  const [response, setResponse] = useState(null)
 
   useEffect(() => {
     initializeSpeechToText()
@@ -24,6 +27,10 @@ export default function VideoNoteApp() {
       }
     }
   }, [])
+
+  useEffect(() => {
+    console.log(file);
+  }, [file])
 
   const initializeSpeechToText = () => {
     try {
@@ -92,6 +99,52 @@ export default function VideoNoteApp() {
     }
   }
 
+  const takeSnapshot = () => {
+    console.log("snap")
+    console.log(videoRef.current)
+    console.log(canvasRef.current)
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current
+      const canvas = canvasRef.current
+      const context = canvas.getContext('2d')
+      canvas.width = video.videoWidth
+      canvas.height = video.videoHeight
+      context.drawImage(video, 0, 0, canvas.width, canvas.height)
+      canvas.toBlob((blob) => {
+        const file = new File([blob], "snapshot.jpg", { type: "image/jpeg" })
+        console.log(file);
+        setFile(file)
+      }, "image/jpeg")
+    }
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    console.log("Im here")
+    if (!file) return
+    console.log(file)
+    const formData = new FormData()
+    formData.append("file", file)
+  
+    try {
+      const res = await fetch('/api/imageToText', {
+        method: 'POST',
+        body: formData,
+      })
+  
+      if (!res.ok) {
+        // Handle HTTP errors
+        throw new Error(`HTTP error! status: ${res.status}`)
+      }
+  
+      const data = await res.json()
+      setResponse(data)
+    } catch (error) {
+      console.error("Error:", error.message)
+      setResponse({ message: "Error processing request", error: error.message })
+    }
+  }
+
   const toggleNoteTaking = () => {
     if (!isNoteTaking) {
       startListening()
@@ -144,6 +197,15 @@ export default function VideoNoteApp() {
                 <CameraOff className="h-6 w-6 text-white" />
               }
             </button>
+            {isCameraOn && (
+              <button
+                onClick={takeSnapshot}
+                className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
+                aria-label="Take snapshot"
+              >
+                <Image className="h-6 w-6 text-white" />
+              </button>
+            )}
             <button
               onClick={toggleNoteTaking}
               className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
@@ -197,6 +259,19 @@ export default function VideoNoteApp() {
           </div>
         </div>
       </main>
+      <canvas ref={canvasRef} className="hidden"></canvas>  {/* Hidden canvas for snapshot */}
+      <footer className="p-4 bg-gray-800">
+        <form onSubmit={handleSubmit}>
+          <button 
+            type="submit"
+            className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-md w-full"
+            disabled={!file}
+          >
+            Submit Snapshot
+          </button>
+        </form>
+        {response && <div className="mt-4 text-center text-gray-300">{JSON.stringify(response, null, 2)}</div>}
+      </footer>
     </div>
   )
 }
