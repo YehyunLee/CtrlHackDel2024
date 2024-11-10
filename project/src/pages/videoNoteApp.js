@@ -158,6 +158,8 @@ export default function VideoNoteApp() {
     const formData = new FormData()
     formData.append("file", file ? file : '');
     formData.append("note", note)
+    console.log(file);
+    console.log(note)
 
     try {
       const res = await fetch('/api/summarize', {

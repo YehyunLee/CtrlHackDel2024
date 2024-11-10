@@ -13,9 +13,10 @@ export default async function handler(req, res) {
     if (req.method !== "POST") {
         return res.status(405).json({ message: "Method Not Allowed" });
     }
+    console.log('summ')
 
     const form = formidable({
-        multiples: false, // Only a single file is expected
+        // multiples: false, // Only a single file is expected
     });
 
     form.parse(req, async (err, fields, files) => {
@@ -25,7 +26,7 @@ export default async function handler(req, res) {
             .json({ message: "File parsing error", error: err.message });
         }
         const file = Array.isArray(files.file) ? files.file[0] : files.file;
-
+        console.log(file);
         if (!file || !file.filepath) {
             console.log('parsing')
             const { note } = fields;
