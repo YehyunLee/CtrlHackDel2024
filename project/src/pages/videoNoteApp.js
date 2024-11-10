@@ -16,10 +16,11 @@ export default function VideoNoteApp() {
   const [isNotesExpanded, setIsNotesExpanded] = useState(false)
   const [error, setError] = useState(null)
   const [file, setFile] = useState(null)
-  const [response, setResponse] = useState(null)
+  const [response, setResponse] = useState([])
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [videoStream, setVideoStream] = useState(null)
   const [currentDeviceId, setCurrentDeviceId] = useState(null)
+  const [isFlashing, setIsFlashing] = useState(false)
 
   const {
     transcript,
@@ -33,6 +34,15 @@ export default function VideoNoteApp() {
     interimResults: true
   })
 
+  const flowchart = `
+  graph LR
+  A[Start] --> B{Is it working?}
+  B -- Yes --> C[Continue]
+  B -- No --> D[Fix it]
+  D --> B
+  C --> E[End]
+  `
+
   useEffect(() => {
     if (!browserSupportsSpeechRecognition) {
       setError("Browser doesn't support speech recognition.")
@@ -43,7 +53,8 @@ export default function VideoNoteApp() {
   // Update note when final transcript is available
   useEffect(() => {
     if (finalTranscript !== '') {
-      setNote(prev => finalTranscript + ' ')
+      setNote(prev => prev + '\n' + finalTranscript)
+      resetTranscript()
     }
   }, [finalTranscript])
 
@@ -106,6 +117,10 @@ export default function VideoNoteApp() {
   }
 
   const takeSnapshot = () => {
+    // Trigger flash animation
+    setIsFlashing(true)
+    setTimeout(() => setIsFlashing(false), 150) // Reset flash after animation
+
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current
       const canvas = canvasRef.current
@@ -134,10 +149,12 @@ export default function VideoNoteApp() {
       })
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`)
       const data = await res.json()
-      setResponse(data)
+      console.log(data.message)
+      setResponse(prev => [...prev, data.message]) // Append new response to array
+      console.log(response)
     } catch (error) {
       console.error("Error:", error.message)
-      setResponse({ message: "Error processing request", error: error.message })
+      setResponse(prev => [...prev, { message: "Error processing request", error: error.message }])
     }
   }
 
@@ -184,6 +201,11 @@ export default function VideoNoteApp() {
             muted={isMuted}
             className="w-full h-full object-cover"
           />
+          {/* Flash overlay */}
+          <div 
+            className={`absolute inset-0 bg-white transition-opacity duration-150 pointer-events-none
+              ${isFlashing ? 'opacity-50' : 'opacity-0'}`}
+          />
           <div className="absolute bottom-4 left-4 right-4 flex justify-center space-x-4">
             <button
               onClick={flipCamera}
@@ -194,7 +216,7 @@ export default function VideoNoteApp() {
             </button>
             <button
               onClick={takeSnapshot}
-              className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
+              className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors transform active:scale-90 transition-transform"
               aria-label="Take snapshot"
             >
               <Image className="h-6 w-6 text-white" />
@@ -232,13 +254,13 @@ export default function VideoNoteApp() {
         </div>
         <div className="bg-gray-800 p-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Live transcript: {listening ? '(Recording...)' : ''}</h2>
+            <h2 className="text-lg font-semibold">Live transcript:</h2>
             {error && <p className="text-red-500 text-sm">Error: {error}</p>}
           </div>
           <div className="px-4 pb-4 h-[calc(100%-4rem)] overflow-y-auto">
             <p className="text-sm text-gray-300 whitespace-pre-wrap">
               {note}
-              {interimTranscript && <span className="text-gray-500">{interimTranscript}</span>}
+              {interimTranscript && <span className="text-gray-500">{'\n' + interimTranscript}</span>} 
             </p>
           </div>
         </div>
@@ -254,7 +276,14 @@ export default function VideoNoteApp() {
             Submit Snapshot
           </button>
         </form>
-        {response && <div className="mt-4 text-gray-300"><h2 className="text-lg font-semibold">Summary: </h2><TextWithLatex text={response.message}/></div>}
+        {response.length > 0 && (
+          <div className="mt-4 text-gray-300">
+            <h2 className="text-lg font-semibold">Summaries:</h2>
+            {response.map((message, index) => (
+              <TextWithLatex key={index} text={message} />
+            ))}
+          </div>
+        )}
         {response && <div><MermaidChart chart={response.flowchart} /></div>}
       </footer>
     </div>
