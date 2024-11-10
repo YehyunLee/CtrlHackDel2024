@@ -1,13 +1,14 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Camera, CameraOff, Mic, MicOff, Pause, Play, StopCircle, ChevronUp, ChevronDown, Image, RefreshCcw } from "lucide-react"
+import { Camera, CameraOff, Mic, MicOff, Pause, Play, StopCircle, ChevronUp, ChevronDown, Image, RefreshCcw, Volume } from "lucide-react"
+
 import SpeechToText from 'speech-to-text'
 
 export default function VideoNoteApp() {
   const videoRef = useRef(null)
   const canvasRef = useRef(null)
-  const [isCameraOn, setIsCameraOn] = useState(false)
+  // const [isCameraOn, setIsCameraOn] = useState(false)
   const [isNoteTaking, setIsNoteTaking] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
@@ -24,6 +25,7 @@ export default function VideoNoteApp() {
 
   useEffect(() => {
     initializeSpeechToText()
+    toggleCamera()
     return () => {
       if (listener) {
         listener.stopListening()
@@ -38,7 +40,7 @@ export default function VideoNoteApp() {
   const initializeSpeechToText = () => {
     try {
       const onFinalised = (text) => {
-        setNote(prevNote => prevNote + text + " ")
+        setNote(prevNote => prevNote + text + "\n")
         setInterimTranscript("") // Clear interim transcript when finalized
       }
 
@@ -89,47 +91,39 @@ export default function VideoNoteApp() {
     }
   }
 
-  const toggleCamera = async () => {
-    if (!isCameraOn) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: true })
-        setVideoStream(stream)
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream
-        }
-        setIsCameraOn(true)
-        setCurrentDeviceId('environment')
-      } catch (err) {
-        console.error("Error accessing the camera and/or microphone:", err)
-        setError(err.message)
+ const toggleCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false }) // Start with back camera
+      setVideoStream(stream)
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
       }
-    } else {
-      if (videoStream) {
-        videoStream.getTracks().forEach(track => track.stop())
+      setCurrentDeviceId('environment') // back camera ID
+    } catch (err) {
+      console.error("Error accessing the camera and/or microphone:", err)
+      setError(err.message)
+    }
+  }  
+  
+  const flipCamera = async () => {
+    if (videoStream) {
+      videoStream.getTracks().forEach(track => track.stop()) // Stop current stream
+    }
+    // Toggle the camera device (front or back)
+    const newFacingMode = currentDeviceId === 'environment' ? 'user' : 'environment' // Switch between 'user' (front) and 'environment' (back)
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: newFacingMode }, audio: true })
+      setVideoStream(stream)
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
       }
-      setIsCameraOn(false)
+      setCurrentDeviceId(newFacingMode) // Update current camera device ID
+    } catch (err) {
+      console.error("Error flipping the camera:", err)
+      setError(err.message)
     }
   }
 
-  const flipCamera = async () => {
-    if (isCameraOn) {
-      if (videoStream) {
-        videoStream.getTracks().forEach(track => track.stop())
-      }
-      const newFacingMode = currentDeviceId === 'environment' ? 'user' : 'environment'
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: newFacingMode }, audio: true })
-        setVideoStream(stream)
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream
-        }
-        setCurrentDeviceId(newFacingMode)
-      } catch (err) {
-        console.error("Error flipping the camera:", err)
-        setError(err.message)
-      }
-    }
-  }
 
   const speakNote = () => {
     if (isSpeaking) {
@@ -222,98 +216,101 @@ export default function VideoNoteApp() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col">
-      <div className="relative flex-grow">
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          muted={isMuted}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute bottom-4 left-4 right-4 flex justify-center space-x-4">
-          <button
-            onClick={toggleCamera}
-            className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
-            aria-label={isCameraOn ? "Turn off camera" : "Turn on camera"}
-          >
-            {isCameraOn ?
-              <Camera className="h-6 w-6 text-white" /> :
-              <CameraOff className="h-6 w-6 text-white" />
-            }
-          </button>
-          <button
-            onClick={flipCamera}
-            className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
-            aria-label="Flip camera"
-          >
-            <RefreshCcw className="h-6 w-6 text-white" />
-          </button>
-          {isCameraOn && (
+    <div className="min-h-screen bg-gray-900 text-white flex-grow flex-col">
+      <main className="flex flex flex-col">
+        <div className="relative flex">
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted={isMuted}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute bottom-4 left-4 right-4 flex justify-center space-x-4">
             <button
-              onClick={takeSnapshot}
+              onClick={flipCamera}
               className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
-              aria-label="Take snapshot"
+              aria-label="Flip camera"
             >
-              <Image className="h-6 w-6 text-white" />
+              <RefreshCcw className="h-6 w-6 text-white" />
             </button>
-          )}
-          <button
-            onClick={toggleNoteTaking}
-            className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
-            aria-label={isNoteTaking ? "Stop taking notes" : "Start taking notes"}
-          >
-            <StopCircle className={`h-6 w-6 ${isNoteTaking ? 'text-red-500' : 'text-white'}`} />
-          </button>
-          {isNoteTaking && (
+              <button
+                onClick={takeSnapshot}
+                className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
+                aria-label="Take snapshot"
+              >
+                <Image className="h-6 w-6 text-white" />
+              </button>
             <button
-              onClick={togglePause}
+              onClick={toggleNoteTaking}
               className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
-              aria-label={isPaused ? "Resume recording" : "Pause recording"}
+              aria-label={isNoteTaking ? "Stop taking notes" : "Start taking notes"}
             >
-              {isPaused ?
-                <Play className="h-6 w-6 text-white" /> :
-                <Pause className="h-6 w-6 text-white" />
+              <StopCircle className={`h-6 w-6 ${isNoteTaking ? 'text-red-500' : 'text-white'}`} />
+            </button>
+            {isNoteTaking && (
+              <button
+                onClick={togglePause}
+                className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
+                aria-label={isPaused ? "Resume recording" : "Pause recording"}
+              >
+                {isPaused ?
+                  <Play className="h-6 w-6 text-white" /> :
+                  <Pause className="h-6 w-6 text-white" />
+                }
+              </button>
+            )}
+            {/* <button
+              onClick={toggleMute}
+              className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
+              aria-label={isMuted ? "Unmute microphone" : "Mute microphone"}
+            >
+              {isMuted ?
+                <MicOff className="h-6 w-6 text-white" /> :
+                <Mic className="h-6 w-6 text-white" />
+              }
+            </button> */}
+
+            <button
+              onClick={speakNote}
+              className={`p-2 rounded-full transition-colors ${isSpeaking ? 'bg-green-600' : 'bg-gray-800/80 hover:bg-gray-700/80'
+                }`}
+              aria-label={isSpeaking ? "Stop speaking note" : "Play note as sound"}
+            >
+              {isSpeaking ?
+                <Volume className="h-6 w-6 text-yellow-500" /> :
+                <Volume className="h-6 w-6 text-white" />
               }
             </button>
-          )}
-          <button
-            onClick={toggleMute}
-            className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
-            aria-label={isMuted ? "Unmute microphone" : "Mute microphone"}
-          >
-            {isMuted ?
-              <MicOff className="h-6 w-6 text-white" /> :
-              <Mic className="h-6 w-6 text-white" />
-            }
-          </button>
+
+          </div>
         </div>
-      </div>
-      <div
-        className={`bg-gray-800 transition-all duration-300 ease-in-out ${isNotesExpanded ? 'h-1/2' : 'h-20'}`}
-      >
-        <div
-          className="flex items-center justify-between p-4 cursor-pointer"
-          onClick={toggleNotesExpansion}
-        >
-          <h2 className="text-lg font-semibold">Generated Notes</h2>
-          {error && <p className="text-red-500 text-sm">Error: {error}</p>}
-          {isNotesExpanded ?
-            <ChevronDown className="h-6 w-6" /> :
-            <ChevronUp className="h-6 w-6" />
-          }
-        </div>
-        <div className={`px-4 pb-4 ${isNotesExpanded ? 'h-[calc(100%-4rem)] overflow-y-auto' : 'h-0 overflow-hidden'}`}>
-          <div className={`px-4 pb-4 ${isNotesExpanded ? 'h-[calc(100%-4rem)] overflow-y-auto' : 'h-0 overflow-hidden'}`}>
-            <p className="text-sm text-gray-300">
-              {note}
-              {interimTranscript && <span className="text-gray-500"> ({interimTranscript})</span>}
+        <div className="bg-gray-800 p-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Live transcript: </h2>
+            {error && <p className="text-red-500 text-sm">Error: {error}</p>}
+          </div>
+          <div className="px-4 pb-4 h-[calc(100%-4rem)] overflow-y-auto">
+            <p className="text-sm text-gray-300 whitespace-pre-wrap">
               {note}
               {interimTranscript && <span className="text-gray-500"> ({interimTranscript})</span>}
             </p>
           </div>
         </div>
-      </div>
-      </  div>
-      )
+      </main>
+      <canvas ref={canvasRef} className="hidden"></canvas>  {/* Hidden canvas for snapshot */}
+      <footer className="p-4 bg-gray-800">
+        <form onSubmit={handleSubmit}>
+          <button
+            type="submit"
+            className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-md w-full"
+            disabled={!file}
+          >
+            Submit Snapshot
+          </button>
+        </form>
+        {response && <div className="mt-4 text-center text-gray-300"><h2 className="text-lg font-semibold">Summary: </h2>{JSON.stringify(response, null, 2)}</div>}
+      </footer>
+    </div>
+  )
 }
