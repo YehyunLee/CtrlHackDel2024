@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { Camera, CameraOff, Mic, MicOff, Pause, Play, StopCircle, ChevronUp, ChevronDown, Image, RefreshCcw } from "lucide-react"
 import SpeechToText from 'speech-to-text'
+import TextWithLatex from './components/TextWithLatex';
+import MermaidChart from './components/MermaidChart';
 
 export default function VideoNoteApp() {
   const videoRef = useRef(null)
@@ -21,6 +23,15 @@ export default function VideoNoteApp() {
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [videoStream, setVideoStream] = useState(null)
   const [currentDeviceId, setCurrentDeviceId] = useState(null)
+
+  const flowchart = `
+  graph LR
+  A[Start] --> B{Is it working?}
+  B -- Yes --> C[Continue]
+  B -- No --> D[Fix it]
+  D --> B
+  C --> E[End]
+`;
 
   useEffect(() => {
     initializeSpeechToText()
@@ -345,7 +356,8 @@ export default function VideoNoteApp() {
             Submit Snapshot
           </button>
         </form>
-        {response && <div className="mt-4 text-center text-gray-300">{JSON.stringify(response, null, 2)}</div>}
+        {response && <div className="mt-4 text-gray-300"><TextWithLatex text={response.message}/> </div>}
+        <MermaidChart chart={flowchart} />
       </footer>
     </div>
   )
