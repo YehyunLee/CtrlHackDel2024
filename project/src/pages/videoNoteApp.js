@@ -325,7 +325,7 @@ export default function VideoNoteApp() {
             </p>
           </div>
         </div>
-      </main>
+      </div>
       <canvas ref={canvasRef} className="hidden"></canvas>  {/* Hidden canvas for snapshot */}
       <footer className="p-4 bg-gray-800">
         <form onSubmit={handleSubmit}>
@@ -341,5 +341,5 @@ export default function VideoNoteApp() {
         <MermaidChart chart={flowchart} />
       </footer>
     </div>
-  )
+  );
 }
