@@ -9,7 +9,7 @@ import MermaidChart from './components/MermaidChart';
 export default function VideoNoteApp() {
   const videoRef = useRef(null)
   const canvasRef = useRef(null)
-  const [isCameraOn, setIsCameraOn] = useState(false)
+  // const [isCameraOn, setIsCameraOn] = useState(false)
   const [isNoteTaking, setIsNoteTaking] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
@@ -35,6 +35,7 @@ export default function VideoNoteApp() {
 
   useEffect(() => {
     initializeSpeechToText()
+    toggleCamera()
     return () => {
       if (listener) {
         listener.stopListening()
@@ -49,7 +50,7 @@ export default function VideoNoteApp() {
   const initializeSpeechToText = () => {
     try {
       const onFinalised = (text) => {
-        setNote(prevNote => prevNote + text + " ")
+        setNote(prevNote => prevNote + text + "\n")
         setInterimTranscript("") // Clear interim transcript when finalized
       }
 
@@ -96,45 +97,35 @@ export default function VideoNoteApp() {
   }
 
   const toggleCamera = async () => {
-    if (!isCameraOn) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: true }) // Start with back camera
-        setVideoStream(stream)
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream
-        }
-        setIsCameraOn(true)
-        setCurrentDeviceId('environment') // back camera ID
-      } catch (err) {
-        console.error("Error accessing the camera and/or microphone:", err)
-        setError(err.message)
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false }) // Start with back camera
+      setVideoStream(stream)
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
       }
-    } else {
-      if (videoStream) {
-        videoStream.getTracks().forEach(track => track.stop()) // Stop the current stream
-      }
-      setIsCameraOn(false)
+      setCurrentDeviceId('environment') // back camera ID
+    } catch (err) {
+      console.error("Error accessing the camera and/or microphone:", err)
+      setError(err.message)
     }
-  }
+  }  
 
   const flipCamera = async () => {
-    if (isCameraOn) {
-      if (videoStream) {
-        videoStream.getTracks().forEach(track => track.stop()) // Stop current stream
+    if (videoStream) {
+      videoStream.getTracks().forEach(track => track.stop()) // Stop current stream
+    }
+    // Toggle the camera device (front or back)
+    const newFacingMode = currentDeviceId === 'environment' ? 'user' : 'environment' // Switch between 'user' (front) and 'environment' (back)
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: newFacingMode }, audio: true })
+      setVideoStream(stream)
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
       }
-      // Toggle the camera device (front or back)
-      const newFacingMode = currentDeviceId === 'environment' ? 'user' : 'environment' // Switch between 'user' (front) and 'environment' (back)
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: newFacingMode }, audio: true })
-        setVideoStream(stream)
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream
-        }
-        setCurrentDeviceId(newFacingMode) // Update current camera device ID
-      } catch (err) {
-        console.error("Error flipping the camera:", err)
-        setError(err.message)
-      }
+      setCurrentDeviceId(newFacingMode) // Update current camera device ID
+    } catch (err) {
+      console.error("Error flipping the camera:", err)
+      setError(err.message)
     }
   }
 
@@ -243,9 +234,9 @@ export default function VideoNoteApp() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col">
-      <main className="flex-grow flex flex-col">
-        <div className="relative flex-grow">
+    <div className="min-h-screen bg-gray-900 text-white flex-grow flex-col">
+      <main className="flex flex flex-col">
+        <div className="relative flex">
           <video
             ref={videoRef}
             autoPlay
@@ -255,23 +246,12 @@ export default function VideoNoteApp() {
           />
           <div className="absolute bottom-4 left-4 right-4 flex justify-center space-x-4">
             <button
-              onClick={toggleCamera}
-              className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
-              aria-label={isCameraOn ? "Turn off camera" : "Turn on camera"}
-            >
-              {isCameraOn ?
-                <Camera className="h-6 w-6 text-white" /> :
-                <CameraOff className="h-6 w-6 text-white" />
-              }
-            </button>
-            <button
               onClick={flipCamera}
               className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
               aria-label="Flip camera"
             >
               <RefreshCcw className="h-6 w-6 text-white" />
             </button>
-            {isCameraOn && (
               <button
                 onClick={takeSnapshot}
                 className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
@@ -279,7 +259,6 @@ export default function VideoNoteApp() {
               >
                 <Image className="h-6 w-6 text-white" />
               </button>
-            )}
             <button
               onClick={toggleNoteTaking}
               className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
@@ -299,7 +278,7 @@ export default function VideoNoteApp() {
                 }
               </button>
             )}
-            <button
+            {/* <button
               onClick={toggleMute}
               className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition-colors"
               aria-label={isMuted ? "Unmute microphone" : "Mute microphone"}
@@ -308,9 +287,9 @@ export default function VideoNoteApp() {
                 <MicOff className="h-6 w-6 text-white" /> :
                 <Mic className="h-6 w-6 text-white" />
               }
-            </button>
+            </button> */}
 
-            {/* <button
+            <button
               onClick={speakNote}
               className={`p-2 rounded-full transition-colors ${isSpeaking ? 'bg-green-600' : 'bg-gray-800/80 hover:bg-gray-700/80'
                 }`}
@@ -320,25 +299,16 @@ export default function VideoNoteApp() {
                 <Volume className="h-6 w-6 text-yellow-500" /> :
                 <Volume className="h-6 w-6 text-white" />
               }
-            </button> */}
+            </button>
           </div>
         </div>
-        <div
-          className={`bg-gray-800 transition-all duration-300 ease-in-out ${isNotesExpanded ? 'h-1/2' : 'h-20'}`}
-        >
-          <div
-            className="flex items-center justify-between p-4 cursor-pointer"
-            onClick={toggleNotesExpansion}
-          >
-            <h2 className="text-lg font-semibold">Generated Notes</h2>
+        <div className="bg-gray-800 p-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Live transcript: </h2>
             {error && <p className="text-red-500 text-sm">Error: {error}</p>}
-            {isNotesExpanded ?
-              <ChevronDown className="h-6 w-6" /> :
-              <ChevronUp className="h-6 w-6" />
-            }
           </div>
-          <div className={`px-4 pb-4 ${isNotesExpanded ? 'h-[calc(100%-4rem)] overflow-y-auto' : 'h-0 overflow-hidden'}`}>
-            <p className="text-sm text-gray-300">
+          <div className="px-4 pb-4 h-[calc(100%-4rem)] overflow-y-auto">
+            <p className="text-sm text-gray-300 whitespace-pre-wrap">
               {note}
               {interimTranscript && <span className="text-gray-500"> ({interimTranscript})</span>}
             </p>
