@@ -8,7 +8,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="h-16 flex items-center">
           <Image src="/Logo.png" alt="Logo" width={32} height={32} />
-          <span className="text-white font-semibold text-xl">SmartNote</span>
+          <span className="text-white font-semibold text-xl">MagicQuil</span>
         </div>
       </div>
     </nav>
