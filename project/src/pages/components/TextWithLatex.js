@@ -11,31 +11,31 @@ const TextWithLatex = ({ text }) => {
   }
 
   // Regular expression to match LaTeX expressions enclosed by $$$$
-  const parts = text.split(/(\$\$.*?\$\$)/);
+  const parts = text.split(/(\$.*?\$)/);
 
   return (
     <div>
       {parts.map((part, index) => {
         // Check if the part is a LaTeX expression
-        // if (part.startsWith('$$') && part.endsWith('$$')) {
-        //   const latexExpression = part.slice(2, -2); // Remove enclosing $$
+        if (part.startsWith('$') && part.endsWith('$')) {
+          const latexExpression = part.slice(1, -1); // Remove enclosing $$
 
-        //   try {
-        //     const html = katex.renderToString(latexExpression, {
-        //       throwOnError: false,
-        //       displayMode: true,
-        //     });
-        //     return (
-        //       <span
-        //         key={index}
-        //         dangerouslySetInnerHTML={{ __html: html }}
-        //       />
-        //     );
-        //   } catch (error) {
-        //     console.error("Error rendering LaTeX:", error);
-        //     return <span key={index}>{latexExpression}</span>;
-        //   }
-        // }
+          try {
+            const html = katex.renderToString(latexExpression, {
+              throwOnError: false,
+              displayMode: true,
+            });
+            return (
+              <span
+                key={index}
+                dangerouslySetInnerHTML={{ __html: html }}
+              />
+            );
+          } catch (error) {
+            console.error("Error rendering LaTeX:", error);
+            return <span key={index}>{latexExpression}</span>;
+          }
+        }
         // If not a LaTeX expression, render as Markdown
         const markdownHtml = md.render(part);
         return (
