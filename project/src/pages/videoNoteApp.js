@@ -361,6 +361,7 @@ export default function VideoNoteApp() {
           >
             Generate PDF
           </button>
+          {/*  */}
 
   
           {/* Modify the Summaries section to include images */}
